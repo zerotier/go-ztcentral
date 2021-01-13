@@ -31,6 +31,7 @@ Example:
             os.Exit(1)
         }
 
+        // print networks and members
         for _, n := range networks {
             log.Printf("%s\t%s", n.ID, n.Config.Name)
             members, err := c.GetMembers(ctx, n.ID)
