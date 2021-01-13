@@ -3,7 +3,7 @@ go-ztcentral
 
 Golang client library for interacting with the [ZeroTier Central Network Management Portal](https://my.zerotier.com)
 
-NOTE:  This package is not finished and is likely to change dradstically before it is done.  Only basic CRUD operations for Networks and Network Members are currently impelemted.
+NOTE:  This package is not finished and is likely to change drastically before it is done.  Only basic CRUD operations for Networks and Network Members are currently impelemted.
 
 NOTE: This does not work with self-hosted controllers.
 
