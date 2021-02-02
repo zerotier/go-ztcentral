@@ -1,0 +1,21 @@
+linters:
+  enable:
+    - golint
+    - goimports
+    - scopelint
+    - gocyclo
+    - gosimple
+    - govet
+    - ineffassign
+    - staticcheck
+    - structcheck
+    - typecheck
+    - varcheck
+    - bodyclose
+    - golint
+    - misspell
+    - errcheck
+    - deadcode
+    - unused
+run:
+  deadline: 5m
