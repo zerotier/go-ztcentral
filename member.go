@@ -29,27 +29,27 @@ type Member struct {
 }
 
 type MemberConfig struct {
-	ActiveBridge         bool          `json:"activeBridge"`
-	Address              string        `json:"address,omitempty"`
-	Authorized           bool          `json:"authorized"`
-	Capabilities         []interface{} `json:"capabilities,omitempty"`
-	CreationTime         int64         `json:"creationTime"`
-	ID                   string        `json:"id,omitempty"`
-	Identity             string        `json:"identity,omitempty"`
-	IPAssignments        []string      `json:"ipAssignments,omitempty"`
-	LastAuthorizedTime   int64         `json:"lastAuthorizedTime"`
-	LastDeauthorizedTime int64         `json:"lastDeauthorizedTime"`
-	NoAutoAssignIPs      bool          `json:"noAutoAssignIps"`
-	NetworkID            string        `json:"nwid,omitempty"`
-	ObjectType           string        `json:"objtype,omitempty"`
-	RemoteTraceLevel     int           `json:"remoteTraceLevel"`
-	RemoteTraceTarget    *string       `json:"remoteTraceTarget,omitempty"`
-	Revision             uint64        `json:"revision"`
-	Tags                 []interface{} `json:"tags,omitempty"`
-	VersionMajor         int           `json:"vMajor"`
-	VersionMinor         int           `json:"vMinor"`
-	VersionRev           int           `json:"vRev"`
-	VersionProtocol      int           `json:"vProto"`
+	ActiveBridge         bool      `json:"activeBridge"`
+	Address              string    `json:"address,omitempty"`
+	Authorized           bool      `json:"authorized"`
+	Capabilities         []uint    `json:"capabilities,omitempty"`
+	CreationTime         int64     `json:"creationTime"`
+	ID                   string    `json:"id,omitempty"`
+	Identity             string    `json:"identity,omitempty"`
+	IPAssignments        []string  `json:"ipAssignments,omitempty"`
+	LastAuthorizedTime   int64     `json:"lastAuthorizedTime"`
+	LastDeauthorizedTime int64     `json:"lastDeauthorizedTime"`
+	NoAutoAssignIPs      bool      `json:"noAutoAssignIps"`
+	NetworkID            string    `json:"nwid,omitempty"`
+	ObjectType           string    `json:"objtype,omitempty"`
+	RemoteTraceLevel     int       `json:"remoteTraceLevel"`
+	RemoteTraceTarget    *string   `json:"remoteTraceTarget,omitempty"`
+	Revision             uint64    `json:"revision"`
+	Tags                 [][2]uint `json:"tags,omitempty"`
+	VersionMajor         int       `json:"vMajor"`
+	VersionMinor         int       `json:"vMinor"`
+	VersionRev           int       `json:"vRev"`
+	VersionProtocol      int       `json:"vProto"`
 }
 
 type MemberList []Member
@@ -105,11 +105,11 @@ func (c *Client) UpdateMember(ctx context.Context, m *Member) (*Member, error) {
 	return &res, nil
 }
 
-func (c *Client) CreateAuthorizedMember(ctx context.Context, networkID, memberID, name string) (*Member, error) {
+func (c *Client) CreateAuthorizedMember(ctx context.Context, networkID, nodeID, name string) (*Member, error) {
 	m := Member{
-		ID:        fmt.Sprintf("%s-%s", networkID, memberID),
+		ID:        fmt.Sprintf("%s-%s", networkID, nodeID),
 		NetworkID: networkID,
-		NodeID:    memberID,
+		NodeID:    nodeID,
 		Name:      name,
 		Config: MemberConfig{
 			Authorized: true,
@@ -121,7 +121,7 @@ func (c *Client) CreateAuthorizedMember(ctx context.Context, networkID, memberID
 		return nil, err
 	}
 
-	req, err := retryablehttp.NewRequest("POST", fmt.Sprintf("%s/network/%s/member/%s", c.BaseURL, networkID, memberID), reqBody)
+	req, err := retryablehttp.NewRequest("POST", fmt.Sprintf("%s/network/%s/member/%s", c.BaseURL, networkID, nodeID), reqBody)
 	if err != nil {
 		return nil, err
 	}
@@ -135,7 +135,7 @@ func (c *Client) CreateAuthorizedMember(ctx context.Context, networkID, memberID
 	return &m, nil
 }
 
-func (c *Client) AuthorizeMember(ctx context.Context, networkID, memberID string) (*Member, error) {
+func (c *Client) AuthorizeMember(ctx context.Context, networkID, nodeID string) (*Member, error) {
 	m := Member{
 		Config: MemberConfig{
 			Authorized: true,
@@ -147,7 +147,7 @@ func (c *Client) AuthorizeMember(ctx context.Context, networkID, memberID string
 		return nil, err
 	}
 
-	req, err := retryablehttp.NewRequest("POST", fmt.Sprintf("%s/network/%s/member/%s", c.BaseURL, networkID, memberID), reqBody)
+	req, err := retryablehttp.NewRequest("POST", fmt.Sprintf("%s/network/%s/member/%s", c.BaseURL, networkID, nodeID), reqBody)
 	if err != nil {
 		return nil, err
 	}

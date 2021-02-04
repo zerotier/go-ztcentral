@@ -86,8 +86,8 @@ type NetworkPermissions struct {
 type NetworkPermissionsMap map[string]NetworkPermissions
 
 type IPRange struct {
-	IPRangeStart string `json:"ipRangeStart"`
-	IPRangeEnd   string `json:"ipRangeEnd"`
+	Start string `json:"ipRangeStart"`
+	End   string `json:"ipRangeEnd"`
 }
 
 type Route struct {
@@ -156,7 +156,7 @@ func (c *Client) UpdateNetwork(ctx context.Context, network *Network) (*Network,
 func (c *Client) NewNetwork(ctx context.Context, name string) (*Network, error) {
 	n := Network{
 		Config: NetworkConfig{
-			Name: "my-test-network",
+			Name: name,
 		},
 	}
 
