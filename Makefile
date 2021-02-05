@@ -7,7 +7,7 @@ reflex-lint: bin/reflex
 	bin/reflex -r '\.go$$' make lint
 
 reflex-test: bin/reflex
-	bin/reflex -r '\.go$$' go test -v ./...
+	bin/reflex -r '\.go$$' -- go test -v ./...
 
 bin/golangci-lint:
 	mkdir -p bin
