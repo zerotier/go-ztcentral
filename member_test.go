@@ -45,7 +45,7 @@ func TestGetMember(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
 
-	net, err := c.NewNetwork(ctx, "get-member-network")
+	net, err := c.NewNetwork(ctx, "get-member-network", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -84,7 +84,7 @@ func TestGetMembers(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
 
-	net, err := c.NewNetwork(ctx, "get-members-network")
+	net, err := c.NewNetwork(ctx, "get-members-network", nil)
 	if err != nil {
 		t.Fatal(err)
 	}

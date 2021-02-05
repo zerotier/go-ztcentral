@@ -49,7 +49,7 @@ func TestNetworkCRUD(t *testing.T) {
 		t.Fatal("Was able to fetch network we don't know about")
 	}
 
-	net, err := c.NewNetwork(ctx, "create-network")
+	net, err := c.NewNetwork(ctx, "create-network", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -77,6 +77,64 @@ func TestNetworkCRUD(t *testing.T) {
 	}
 }
 
+func TestNewNetworkWithNetworkConfig(t *testing.T) {
+	testutil.NeedsToken(t)
+
+	c := NewClient(testutil.InitTokenFromEnv())
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+
+	// FIXME this should eventually be turned into table tests.
+	nc := NetworkConfig{
+		Name: "overridden",
+	}
+
+	net, err := c.NewNetwork(ctx, "real", &nc)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if net.Config.Name != "real" {
+		t.Fatal("real name was not overridden during newnetwork")
+	}
+
+	getter, err := c.GetNetwork(ctx, net.Config.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if getter.Config.Name != "real" {
+		t.Fatal("real name was not overridden on server side of newnetwork")
+	}
+
+	if err := c.DeleteNetwork(ctx, net.Config.ID); err != nil {
+		t.Fatal(err)
+	}
+
+	net, err = c.NewNetwork(ctx, "real", &NetworkConfig{
+		IPAssignmentPool: []IPRange{
+			{
+				Start: "10.0.0.2",
+				End:   "10.0.0.254",
+			},
+		},
+		Routes: []Route{
+			{
+				Target: "10.0.1.0/24",
+				Via:    "10.0.0.1",
+			},
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err := c.DeleteNetwork(ctx, net.Config.ID); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestGetNetworks(t *testing.T) {
 	testutil.NeedsToken(t)
 
@@ -97,7 +155,7 @@ func TestGetNetworks(t *testing.T) {
 
 	for i := 0; i < 20; i++ {
 		name := testutil.RandomString(30, 5)
-		net, err := c.NewNetwork(ctx, name)
+		net, err := c.NewNetwork(ctx, name, nil)
 		if err != nil {
 			t.Fatal(err)
 		}

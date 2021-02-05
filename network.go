@@ -149,11 +149,18 @@ func (c *Client) UpdateNetwork(ctx context.Context, network *Network) (*Network,
 	return &res, nil
 }
 
-func (c *Client) NewNetwork(ctx context.Context, name string) (*Network, error) {
+func (c *Client) NewNetwork(ctx context.Context, name string, nc *NetworkConfig) (*Network, error) {
 	n := Network{
 		Config: NetworkConfig{
 			Name: name,
 		},
+	}
+
+	if nc != nil {
+		nc.Name = name
+		n = Network{
+			Config: *nc,
+		}
 	}
 
 	body, err := json.Marshal(n)
