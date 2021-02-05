@@ -60,10 +60,8 @@ func (c *Client) GetMembers(ctx context.Context, networkID string) (MemberList, 
 		return nil, err
 	}
 
-	req = req.WithContext(ctx)
-
 	res := make(MemberList, 0)
-	if err := c.sendRequest(req, &res); err != nil {
+	if err := c.sendRequest(ctx, req, &res); err != nil {
 		return nil, err
 	}
 
@@ -76,10 +74,8 @@ func (c *Client) GetMember(ctx context.Context, networkID, memberID string) (*Me
 		return nil, err
 	}
 
-	req = req.WithContext(ctx)
-
 	res := Member{}
-	if err := c.sendRequest(req, &res); err != nil {
+	if err := c.sendRequest(ctx, req, &res); err != nil {
 		return nil, err
 	}
 
@@ -98,7 +94,7 @@ func (c *Client) UpdateMember(ctx context.Context, m *Member) (*Member, error) {
 	}
 
 	res := Member{}
-	if err := c.sendRequest(req, &res); err != nil {
+	if err := c.sendRequest(ctx, req, &res); err != nil {
 		return nil, err
 	}
 
@@ -126,9 +122,7 @@ func (c *Client) CreateAuthorizedMember(ctx context.Context, networkID, memberID
 		return nil, err
 	}
 
-	req = req.WithContext(ctx)
-
-	if err := c.sendRequest(req, &m); err != nil {
+	if err := c.sendRequest(ctx, req, &m); err != nil {
 		return nil, err
 	}
 
@@ -152,7 +146,7 @@ func (c *Client) AuthorizeMember(ctx context.Context, networkID, memberID string
 		return nil, err
 	}
 
-	if err := c.sendRequest(req, &m); err != nil {
+	if err := c.sendRequest(ctx, req, &m); err != nil {
 		return nil, err
 	}
 
@@ -176,7 +170,7 @@ func (c *Client) DeauthorizeMember(ctx context.Context, networkID, memberID stri
 		return nil, err
 	}
 
-	if err := c.sendRequest(req, &m); err != nil {
+	if err := c.sendRequest(ctx, req, &m); err != nil {
 		return nil, err
 	}
 
@@ -189,9 +183,7 @@ func (c *Client) DeleteMember(ctx context.Context, m *Member) error {
 		return err
 	}
 
-	req = req.WithContext(ctx)
-
-	if err := c.sendRequest(req, nil); err != nil {
+	if err := c.sendRequest(ctx, req, nil); err != nil {
 		return err
 	}
 

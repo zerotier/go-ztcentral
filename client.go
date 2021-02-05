@@ -29,6 +29,7 @@
 package ztcentral
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -63,7 +64,9 @@ type errorResponse struct {
 	Code    int
 }
 
-func (c *Client) sendRequest(req *retryablehttp.Request, v interface{}) error {
+func (c *Client) sendRequest(ctx context.Context, req *retryablehttp.Request, v interface{}) error {
+	req = req.WithContext(ctx)
+
 	req.Header.Set("Content-Type", "application/json; charset=utf-8")
 	req.Header.Set("Accept", "application/json; charset=utf-8")
 	req.Header.Set("Authorization", fmt.Sprintf("bearer %s", c.apiKey))

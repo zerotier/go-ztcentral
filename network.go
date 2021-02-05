@@ -108,10 +108,8 @@ func (c *Client) GetNetworks(ctx context.Context) (NetworkList, error) {
 		return nil, err
 	}
 
-	req = req.WithContext(ctx)
-
 	res := make(NetworkList, 0)
-	if err := c.sendRequest(req, &res); err != nil {
+	if err := c.sendRequest(ctx, req, &res); err != nil {
 		return nil, err
 	}
 
@@ -124,10 +122,8 @@ func (c *Client) GetNetwork(ctx context.Context, networkID string) (*Network, er
 		return nil, err
 	}
 
-	req = req.WithContext(ctx)
-
 	res := Network{}
-	if err := c.sendRequest(req, &res); err != nil {
+	if err := c.sendRequest(ctx, req, &res); err != nil {
 		return nil, err
 	}
 
@@ -146,7 +142,7 @@ func (c *Client) UpdateNetwork(ctx context.Context, network *Network) (*Network,
 	}
 
 	res := Network{}
-	if err := c.sendRequest(req, &res); err != nil {
+	if err := c.sendRequest(ctx, req, &res); err != nil {
 		return nil, err
 	}
 
@@ -170,9 +166,7 @@ func (c *Client) NewNetwork(ctx context.Context, name string) (*Network, error) 
 		return nil, err
 	}
 
-	req = req.WithContext(ctx)
-
-	if err := c.sendRequest(req, &n); err != nil {
+	if err := c.sendRequest(ctx, req, &n); err != nil {
 		return nil, err
 	}
 
@@ -185,7 +179,5 @@ func (c *Client) DeleteNetwork(ctx context.Context, networkID string) error {
 		return err
 	}
 
-	req = req.WithContext(ctx)
-
-	return c.sendRequest(req, nil)
+	return c.sendRequest(ctx, req, nil)
 }
