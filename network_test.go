@@ -1,5 +1,3 @@
-// +build integration
-
 // Copyright (c) 2021, ZeroTier, Inc.
 // All rights reserved.
 //
@@ -32,53 +30,152 @@ package ztcentral
 
 import (
 	"context"
-	"os"
 	"testing"
+	"time"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/zerotier/go-ztcentral/pkg/testutil"
 )
 
-func TestGetNetwork(t *testing.T) {
-	c := NewClient(os.Getenv("ZEROTIER_CENTRAL_API_KEY"))
+func TestNetworkCRUD(t *testing.T) {
+	testutil.NeedsToken(t)
 
-	ctx := context.Background()
-	res, err := c.GetNetwork(ctx, "8056c2e21c000001")
+	c := NewClient(testutil.InitTokenFromEnv())
 
-	assert.Nil(t, err, "expecting nil error")
-	assert.NotNil(t, res, "expecting non-nil result")
-	assert.Equal(t, "8056c2e21c000001", res.ID, "expecting equal network id")
-	assert.Equal(t, "earth.zerotier.net", res.Config.Name, "expecting eqla network name")
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+
+	_, err := c.GetNetwork(ctx, "8056c2e21c000001")
+	if err == nil {
+		t.Fatal("Was able to fetch network we don't know about")
+	}
+
+	net, err := c.NewNetwork(ctx, "create-network", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer c.DeleteNetwork(ctx, net.Config.ID) // this will fail when the test passes, and that's ok
+
+	res, err := c.GetNetwork(ctx, net.Config.ID)
+	if err != nil {
+		t.Fatal("Was able to fetch network we don't know about")
+	}
+
+	if res.Config.ID != net.Config.ID {
+		t.Fatal("Initial returned network configuration was not the same as GetNetwork")
+	}
+
+	if res.Config.Name != net.Config.Name {
+		t.Fatal("Network name was not equal between creation and GetNetwork")
+	}
+
+	if err := c.DeleteNetwork(ctx, net.Config.ID); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := c.GetNetwork(ctx, net.Config.ID); err == nil {
+		t.Fatal("Was able to fetch network we just deleted")
+	}
+}
+
+func TestNewNetworkWithNetworkConfig(t *testing.T) {
+	testutil.NeedsToken(t)
+
+	c := NewClient(testutil.InitTokenFromEnv())
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+
+	// FIXME this should eventually be turned into table tests.
+	nc := NetworkConfig{
+		Name: "overridden",
+	}
+
+	net, err := c.NewNetwork(ctx, "real", &nc)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if net.Config.Name != "real" {
+		t.Fatal("real name was not overridden during newnetwork")
+	}
+
+	getter, err := c.GetNetwork(ctx, net.Config.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if getter.Config.Name != "real" {
+		t.Fatal("real name was not overridden on server side of newnetwork")
+	}
+
+	if err := c.DeleteNetwork(ctx, net.Config.ID); err != nil {
+		t.Fatal(err)
+	}
+
+	net, err = c.NewNetwork(ctx, "real", &NetworkConfig{
+		IPAssignmentPool: []IPRange{
+			{
+				Start: "10.0.0.2",
+				End:   "10.0.0.254",
+			},
+		},
+		Routes: []Route{
+			{
+				Target: "10.0.1.0/24",
+				Via:    "10.0.0.1",
+			},
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err := c.DeleteNetwork(ctx, net.Config.ID); err != nil {
+		t.Fatal(err)
+	}
 }
 
 func TestGetNetworks(t *testing.T) {
-	c := NewClient(os.Getenv("ZEROTIER_CENTRAL_API_KEY"))
+	testutil.NeedsToken(t)
 
-	ctx := context.Background()
+	c := NewClient(testutil.InitTokenFromEnv())
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+
+	networks := map[string]*Network{}
+
+	t.Cleanup(func() {
+		for name, net := range networks {
+			if err := c.DeleteNetwork(context.Background(), net.Config.ID); err != nil {
+				t.Fatalf("During cleanup of %q: %v", name, err)
+			}
+		}
+	})
+
+	for i := 0; i < 20; i++ {
+		name := testutil.RandomString(30, 5)
+		net, err := c.NewNetwork(ctx, name, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		networks[name] = net
+	}
+
 	res, err := c.GetNetworks(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	assert.Nil(t, err, "expecting nil error")
-	assert.NotNil(t, res, "expecting non-nil result")
-	assert.NotEqual(t, 0, len(res), "expecting non-zero array length")
-}
+	for _, network := range res {
+		net, ok := networks[network.Config.Name]
+		if !ok {
+			continue // not our network, maybe created for some other reason. just ignore
+		}
 
-func TestCreateAndDeleteNetwork(t *testing.T) {
-	c := NewClient(os.Getenv("ZEROTIER_CENTRAL_API_KEY"))
-
-	ctx := context.Background()
-	networkName := "my-test-network"
-
-	res, err := c.NewNetwork(ctx, networkName)
-
-	assert.Nil(t, err, "expecting nil error")
-	assert.NotNil(t, res, "expecting non-nil result")
-	assert.NotEmpty(t, res.ID, "expected network ID to be present")
-	assert.Equal(t, networkName, res.Config.Name, "expected equal network names")
-
-	err = c.DeleteNetwork(ctx, res.ID)
-
-	assert.Nil(t, err, "expecting nil error")
-
-	res, err = c.GetNetwork(ctx, res.ID)
-	assert.NotNil(t, err, "expecting non-nil error")
-	assert.Nil(t, res, "expecting nil result")
+		if net.Config.ID != network.Config.ID {
+			t.Fatalf("ID mismatch for %q", network.Config.Name)
+		}
+	}
 }

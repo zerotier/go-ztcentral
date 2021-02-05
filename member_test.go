@@ -1,5 +1,3 @@
-// +build integration
-
 // Copyright (c) 2021, ZeroTier, Inc.
 // All rights reserved.
 //
@@ -32,31 +30,96 @@ package ztcentral
 
 import (
 	"context"
-	"os"
 	"testing"
+	"time"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/zerotier/go-ztcentral/pkg/testutil"
+	"github.com/zerotier/go-ztidentity"
 )
 
 func TestGetMember(t *testing.T) {
-	c := NewClient(os.Getenv("ZEROTIER_CENTRAL_API_KEY"))
+	testutil.NeedsToken(t)
 
-	ctx := context.Background()
-	res, err := c.GetMember(ctx, "8056c2e21c000001", "00b0656ddc")
+	c := NewClient(testutil.InitTokenFromEnv())
 
-	assert.Nil(t, err, "expecting nil error")
-	assert.NotNil(t, res, "expecting non-nil result")
-	assert.Equal(t, "8056c2e21c000001", res.NetworkID, "expecting equal network IDs")
-	assert.Equal(t, "00b0656ddc", res.NodeID, "expecting equal node ID")
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+
+	net, err := c.NewNetwork(ctx, "get-member-network", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer c.DeleteNetwork(ctx, net.Config.ID)
+
+	if _, err := c.GetMember(ctx, net.Config.ID, "123456789"); err == nil {
+		t.Fatal("Tried to get a fake member and succeeded")
+	}
+
+	aliceID := ztidentity.NewZeroTierIdentity()
+
+	alice, err := c.CreateAuthorizedMember(ctx, net.Config.ID, aliceID.IDString(), "alice")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	res, err := c.GetMember(ctx, net.Config.ID, alice.NodeID)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if res.NetworkID != net.Config.ID {
+		t.Fatal("network ID of member was not equivalent")
+	}
+
+	if res.NodeID != alice.NodeID {
+		t.Fatal("member IDs were not equivalent")
+	}
 }
 
 func TestGetMembers(t *testing.T) {
-	c := NewClient(os.Getenv("ZEROTIER_CENTRAL_API_KEY"))
+	testutil.NeedsToken(t)
 
-	ctx := context.Background()
-	res, err := c.GetMembers(ctx, "8056c2e21c000001")
+	c := NewClient(testutil.InitTokenFromEnv())
 
-	assert.Nil(t, err, "expecting nil error")
-	assert.NotNil(t, res, "expecting non-nil result")
-	assert.NotEmpty(t, res, "expecting non-empty array result")
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+
+	net, err := c.NewNetwork(ctx, "get-members-network", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer c.DeleteNetwork(ctx, net.Config.ID)
+
+	users := map[string]ztidentity.ZeroTierIdentity{
+		"awk":    ztidentity.NewZeroTierIdentity(),
+		"bash":   ztidentity.NewZeroTierIdentity(),
+		"cc":     ztidentity.NewZeroTierIdentity(),
+		"dpkg":   ztidentity.NewZeroTierIdentity(),
+		"edlin":  ztidentity.NewZeroTierIdentity(),
+		"finger": ztidentity.NewZeroTierIdentity(),
+		"gopher": ztidentity.NewZeroTierIdentity(),
+	}
+
+	for name, id := range users {
+		_, err := c.CreateAuthorizedMember(ctx, net.Config.ID, id.IDString(), name)
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	members, err := c.GetMembers(ctx, net.Config.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for _, member := range members {
+		id, ok := users[member.Name]
+		if !ok {
+			t.Fatal("could not find member in pre-populated table")
+		}
+
+		if id.IDString() != member.Config.ID {
+			t.Fatalf("IDs were not equal for member %q", member.Name)
+		}
+	}
 }

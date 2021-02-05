@@ -60,10 +60,8 @@ func (c *Client) GetMembers(ctx context.Context, networkID string) (MemberList, 
 		return nil, err
 	}
 
-	req = req.WithContext(ctx)
-
 	res := make(MemberList, 0)
-	if err := c.sendRequest(req, &res); err != nil {
+	if err := c.sendRequest(ctx, req, &res); err != nil {
 		return nil, err
 	}
 
@@ -76,10 +74,8 @@ func (c *Client) GetMember(ctx context.Context, networkID, memberID string) (*Me
 		return nil, err
 	}
 
-	req = req.WithContext(ctx)
-
 	res := Member{}
-	if err := c.sendRequest(req, &res); err != nil {
+	if err := c.sendRequest(ctx, req, &res); err != nil {
 		return nil, err
 	}
 
@@ -98,18 +94,18 @@ func (c *Client) UpdateMember(ctx context.Context, m *Member) (*Member, error) {
 	}
 
 	res := Member{}
-	if err := c.sendRequest(req, &res); err != nil {
+	if err := c.sendRequest(ctx, req, &res); err != nil {
 		return nil, err
 	}
 
 	return &res, nil
 }
 
-func (c *Client) CreateAuthorizedMember(ctx context.Context, networkID, nodeID, name string) (*Member, error) {
+func (c *Client) CreateAuthorizedMember(ctx context.Context, networkID, memberID, name string) (*Member, error) {
 	m := Member{
-		ID:        fmt.Sprintf("%s-%s", networkID, nodeID),
+		ID:        fmt.Sprintf("%s-%s", networkID, memberID),
 		NetworkID: networkID,
-		NodeID:    nodeID,
+		NodeID:    memberID,
 		Name:      name,
 		Config: MemberConfig{
 			Authorized: true,
@@ -121,21 +117,19 @@ func (c *Client) CreateAuthorizedMember(ctx context.Context, networkID, nodeID, 
 		return nil, err
 	}
 
-	req, err := retryablehttp.NewRequest("POST", fmt.Sprintf("%s/network/%s/member/%s", c.BaseURL, networkID, nodeID), reqBody)
+	req, err := retryablehttp.NewRequest("POST", fmt.Sprintf("%s/network/%s/member/%s", c.BaseURL, networkID, memberID), reqBody)
 	if err != nil {
 		return nil, err
 	}
 
-	req = req.WithContext(ctx)
-
-	if err := c.sendRequest(req, &m); err != nil {
+	if err := c.sendRequest(ctx, req, &m); err != nil {
 		return nil, err
 	}
 
 	return &m, nil
 }
 
-func (c *Client) AuthorizeMember(ctx context.Context, networkID, nodeID string) (*Member, error) {
+func (c *Client) AuthorizeMember(ctx context.Context, networkID, memberID string) (*Member, error) {
 	m := Member{
 		Config: MemberConfig{
 			Authorized: true,
@@ -147,12 +141,12 @@ func (c *Client) AuthorizeMember(ctx context.Context, networkID, nodeID string) 
 		return nil, err
 	}
 
-	req, err := retryablehttp.NewRequest("POST", fmt.Sprintf("%s/network/%s/member/%s", c.BaseURL, networkID, nodeID), reqBody)
+	req, err := retryablehttp.NewRequest("POST", fmt.Sprintf("%s/network/%s/member/%s", c.BaseURL, networkID, memberID), reqBody)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := c.sendRequest(req, &m); err != nil {
+	if err := c.sendRequest(ctx, req, &m); err != nil {
 		return nil, err
 	}
 
@@ -176,7 +170,7 @@ func (c *Client) DeauthorizeMember(ctx context.Context, networkID, memberID stri
 		return nil, err
 	}
 
-	if err := c.sendRequest(req, &m); err != nil {
+	if err := c.sendRequest(ctx, req, &m); err != nil {
 		return nil, err
 	}
 
@@ -189,9 +183,7 @@ func (c *Client) DeleteMember(ctx context.Context, m *Member) error {
 		return err
 	}
 
-	req = req.WithContext(ctx)
-
-	if err := c.sendRequest(req, nil); err != nil {
+	if err := c.sendRequest(ctx, req, nil); err != nil {
 		return err
 	}
 

@@ -14,8 +14,9 @@ linters:
     - bodyclose
     - golint
     - misspell
-    - errcheck
     - deadcode
     - unused
+  disable:
+    - errcheck
 run:
   deadline: 5m
