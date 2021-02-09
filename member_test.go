@@ -62,7 +62,7 @@ func TestGetMember(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	res, err := c.GetMember(ctx, net.Config.ID, alice.NodeID)
+	res, err := c.GetMember(ctx, net.Config.ID, alice.MemberID)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -71,7 +71,7 @@ func TestGetMember(t *testing.T) {
 		t.Fatal("network ID of member was not equivalent")
 	}
 
-	if res.NodeID != alice.NodeID {
+	if res.MemberID != alice.MemberID {
 		t.Fatal("member IDs were not equivalent")
 	}
 }
@@ -118,7 +118,7 @@ func TestGetMembers(t *testing.T) {
 			t.Fatal("could not find member in pre-populated table")
 		}
 
-		if id.IDString() != member.Config.ID {
+		if id.IDString() != member.Config.MemberID {
 			t.Fatalf("IDs were not equal for member %q", member.Name)
 		}
 	}

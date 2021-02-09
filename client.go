@@ -26,6 +26,7 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+// Package ztcentral provides an API for interacting with ZeroTier Central (https://my.zerotier.com)
 package ztcentral
 
 import (
@@ -48,6 +49,9 @@ type Client struct {
 	HTTPClient *retryablehttp.Client
 }
 
+// NewClient creates a client.
+// key is an API key for your ZeroTier Central that you can generate after login.
+// It returns a fully initialized client.
 func NewClient(key string) *Client {
 	c := &Client{
 		BaseURL:    BaseURLV1,
