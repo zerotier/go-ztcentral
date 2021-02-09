@@ -110,10 +110,10 @@ type MemberConfig struct {
 	// List of IP addresses assigned to the member
 	IPAssignments []string `json:"ipAssignments,omitempty"`
 
-	// Time the member was authorized on the network
+	// Time the member was authorized on the network [read only]
 	LastAuthorizedTime int64 `json:"lastAuthorizedTime"`
 
-	// Time the member was last deauthorized on the network.
+	// Time the member was last deauthorized on the network. [read only]
 	LastDeauthorizedTime int64 `json:"lastDeauthorizedTime"`
 
 	// Exempt this member from the IP auto assignment pool on a Network
@@ -125,16 +125,16 @@ type MemberConfig struct {
 	// Array of tuples of tag ID, tag value
 	Tags [][2]uint `json:"tags,omitempty"`
 
-	// Major version of the client
+	// Major version of the client [read only]
 	VersionMajor int `json:"vMajor"`
 
-	// Minor version of the clinet
+	// Minor version of the clinet [read only]
 	VersionMinor int `json:"vMinor"`
 
-	// Revision number of client
+	// Revision number of client [read only]
 	VersionRev int `json:"vRev"`
 
-	// Protocol version number
+	// Protocol version number [read only]
 	VersionProtocol int `json:"vProto"`
 }
 
