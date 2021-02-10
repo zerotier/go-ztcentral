@@ -64,10 +64,6 @@ func TestNetworkCRUD(t *testing.T) {
 		t.Fatal("Initial returned network configuration was not the same as GetNetwork")
 	}
 
-	if res.Config.LastModified == 0 {
-		t.Fatal("last modified time was 0")
-	}
-
 	if res.Config.Name != net.Config.Name {
 		t.Fatal("Network name was not equal between creation and GetNetwork")
 	}
