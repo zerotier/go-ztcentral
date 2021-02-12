@@ -90,7 +90,7 @@ func TestNewNetworkWithNetworkConfig(t *testing.T) {
 		Name: "overridden",
 	}
 
-	net, err := c.NewNetwork(ctx, "real", &nc)
+	net, err := c.NewNetwork(ctx, "real", &Network{Config: nc})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -112,7 +112,7 @@ func TestNewNetworkWithNetworkConfig(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	net, err = c.NewNetwork(ctx, "real", &NetworkConfig{
+	net, err = c.NewNetwork(ctx, "real", &Network{Config: NetworkConfig{
 		IPAssignmentPool: []IPRange{
 			{
 				Start: "10.0.0.2",
@@ -125,7 +125,7 @@ func TestNewNetworkWithNetworkConfig(t *testing.T) {
 				Via:    "10.0.0.1",
 			},
 		},
-	})
+	}})
 	if err != nil {
 		t.Fatal(err)
 	}
