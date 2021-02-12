@@ -112,22 +112,33 @@ func TestNewNetworkWithNetworkConfig(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	net, err = c.NewNetwork(ctx, "real", &Network{Config: NetworkConfig{
-		IPAssignmentPool: []IPRange{
-			{
-				Start: "10.0.0.2",
-				End:   "10.0.0.254",
+	net, err = c.NewNetwork(ctx, "real", &Network{
+		RulesSource: "drop;",
+		Config: NetworkConfig{
+			IPAssignmentPool: []IPRange{
+				{
+					Start: "10.0.0.2",
+					End:   "10.0.0.254",
+				},
 			},
-		},
-		Routes: []Route{
-			{
-				Target: "10.0.1.0/24",
-				Via:    "10.0.0.1",
+			Routes: []Route{
+				{
+					Target: "10.0.1.0/24",
+					Via:    "10.0.0.1",
+				},
 			},
-		},
-	}})
+		}})
 	if err != nil {
 		t.Fatal(err)
+	}
+
+	net, err = c.GetNetwork(ctx, net.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if net.RulesSource != "drop;" {
+		t.Fatal("rules source was not equal")
 	}
 
 	if err := c.DeleteNetwork(ctx, net.Config.ID); err != nil {
