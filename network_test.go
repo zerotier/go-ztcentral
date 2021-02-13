@@ -137,8 +137,26 @@ func TestNewNetworkWithNetworkConfig(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if net.RulesSource != "drop;" {
+	rules, err := c.UpdateNetworkRules(ctx, net.ID, "drop;")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if rules != "drop;" {
+		t.Fatal("regurgitated rules were not correct")
+	}
+
+	net2, err := c.GetNetwork(ctx, net.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if net2.RulesSource != "drop;" {
 		t.Fatal("rules source was not equal")
+	}
+
+	if net2.Config.Name == "" {
+		t.Fatal("name was cleared as a result of rules update")
 	}
 
 	if err := c.DeleteNetwork(ctx, net.Config.ID); err != nil {

@@ -259,6 +259,15 @@ func (c *Client) UpdateNetwork(ctx context.Context, network *Network) (*Network,
 	return &res, nil
 }
 
+func (c *Client) UpdateNetworkRules(ctx context.Context, id, source string) (string, error) {
+	net, err := c.UpdateNetwork(ctx, &Network{ID: id, RulesSource: source})
+	if err != nil {
+		return "", err
+	}
+
+	return net.RulesSource, nil
+}
+
 func (c *Client) NewNetwork(ctx context.Context, name string, n *Network) (*Network, error) {
 	if n != nil {
 		n.Config.Name = name
