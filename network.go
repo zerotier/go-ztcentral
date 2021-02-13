@@ -43,52 +43,52 @@ type Network struct {
 	ID string `json:"id"`
 
 	// The type of the JSON object [read only]
-	Type string `json:"type"`
+	Type string `json:"type,omitempty"`
 
 	// Current server system clock [read only]
-	Clock int64 `json:"clock"`
+	Clock int64 `json:"clock,omitempty"`
 
 	// NetworkConfig sub-object
-	Config NetworkConfig `json:"config"`
+	Config NetworkConfig `json:"config,omitempty"`
 
 	// Description of the network
-	Description string `json:"description"`
+	Description string `json:"description,omitempty"`
 
 	// Network ruels engine source code
-	RulesSource string `json:"rulesSource"`
+	RulesSource string `json:"rulesSource,omitempty"`
 
 	// Network editing access permissions
-	Permissions NetworkPermissionsMap `json:"permissions"`
+	Permissions NetworkPermissionsMap `json:"permissions,omitempty"`
 
 	// ZeroTeir Central user ID of the owner of the network [read only]
-	OwnerID string `json:"ownerId"`
+	OwnerID string `json:"ownerId,omitempty"`
 
 	// Count of current online members [read only]
-	OnlineMemberCount int `json:"onlineMemberCount"`
+	OnlineMemberCount int `json:"onlineMemberCount,omitempty"`
 
 	// Count of members authorized on the network [read only]
-	AuthorizedMemberCount int `json:"authorizedMemberCount"`
+	AuthorizedMemberCount int `json:"authorizedMemberCount,omitempty"`
 
 	// Total number of members with access or requesting access to the network [read only]
-	TotalMemberCount int `json:"totalMemberCount"`
+	TotalMemberCount int `json:"totalMemberCount,omitempty"`
 
 	// Capabilties defined in rule set by name
-	CapabilitiesByName map[string]interface{} `json:"capabilitiesByName"`
+	CapabilitiesByName map[string]interface{} `json:"capabilitiesByName,omitempty"`
 
 	// Tags defined in rule set by name
-	TagsByName map[string]interface{} `json:"tagsByName"`
+	TagsByName map[string]interface{} `json:"tagsByName,omitempty"`
 }
 
 // NetworkConfig object represents individual configuration options on the network
 type NetworkConfig struct {
 	// Time of network creation
-	CreationTime int64 `json:"creationTime"`
+	CreationTime int64 `json:"creationTime,omitempty"`
 
 	// Array of capabilities available on this network (see https://www.zerotier.com/manual/#3)
-	Capabilities []interface{} `json:"capabilities"`
+	Capabilities []interface{} `json:"capabilities,omitempty"`
 
 	// Whether or not Broadcast packets are allowed on the network
-	EnableBroadcast bool `json:"enableBroadcast"`
+	EnableBroadcast *bool `json:"enableBroadcast,omitempty"`
 
 	// 16 digit hexidecimal Network ID
 	ID string `json:"id,omitempty"`
@@ -97,7 +97,7 @@ type NetworkConfig struct {
 	IPAssignmentPool []IPRange `json:"ipAssignmentPools,omitempty"`
 
 	// Time of last network modification
-	LastModified int64 `json:"lastModified"`
+	LastModified int64 `json:"lastModified,omitempty"`
 
 	// MTU of the virtual network (default 2800)
 	MTU int `json:"mtu,omitempty"`
@@ -105,34 +105,34 @@ type NetworkConfig struct {
 	// Maximum number of recipients per multicast or broadcast
 	//
 	// Warning: Setting this to 0 will disable IPv4 communication on your network!
-	MulticastLimit int `json:"multicastLimit"`
+	MulticastLimit int `json:"multicastLimit,omitempty"`
 
 	// Name of the network
-	Name string `json:"name"`
+	Name string `json:"name,omitempty"`
 
 	// Whether this is a private or public networks
 	//
 	// If false, members do not require authorization to join the network.
 	// They will be auto-accepted & authorized.
-	Private bool `json:"private"`
+	Private *bool `json:"private,omitempty"`
 
 	// Network configuration revision number [read only]
 	Revision uint64 `json:"revision,omitempty"`
 
 	// Array of Routes published to members
-	Routes []Route `json:"routes"`
+	Routes []Route `json:"routes,omitempty"`
 
 	// Network base rules (see https://www.zerotier.com/manual/#3)
-	Rules []interface{} `json:"rules"`
+	Rules []interface{} `json:"rules,omitempty"`
 
 	// Array of tags available on the network (see https://www.zerotier.com/manual/#3)
-	Tags []interface{} `json:"tags"`
+	Tags []interface{} `json:"tags,omitempty"`
 
 	// IPv4 address assignment modes
-	IPV4AssignMode `json:"v4AssignMode"`
+	IPV4AssignMode *IPV4AssignMode `json:"v4AssignMode,omitempty"`
 
 	// IPv6 address assignment modes
-	IPV6AssignMode `json:"v6AssignMode"`
+	IPV6AssignMode *IPV6AssignMode `json:"v6AssignMode,omitempty"`
 
 	// Network DNS configuration
 	DNS *NetworkDNS `json:"dns,omitempty"`
@@ -140,10 +140,10 @@ type NetworkConfig struct {
 
 // NetworkPermissions holds the 4 different permissions settable on a network
 type NetworkPermissions struct {
-	Authorize bool `json:"a"`
-	Delete    bool `json:"d"`
-	Modify    bool `json:"m"`
-	Read      bool `json:"r"`
+	Authorize *bool `json:"a,omitempty"`
+	Delete    *bool `json:"d,omitempty"`
+	Modify    *bool `json:"m,omitempty"`
+	Read      *bool `json:"r,omitempty"`
 }
 
 // NetworkPermissionsMap is a map of a ZeroTier Central User ID to NetworkPermissions
@@ -152,14 +152,14 @@ type NetworkPermissionsMap map[string]NetworkPermissions
 // IPRange represents a range of IP addresses from start to end.
 // Can be either IPv4 or IPv6
 type IPRange struct {
-	Start string `json:"ipRangeStart"`
-	End   string `json:"ipRangeEnd"`
+	Start string `json:"ipRangeStart,omitempty"`
+	End   string `json:"ipRangeEnd,omitempty"`
 }
 
 // Route is a network route uset to specify a managed route published to clients on a network
 type Route struct {
 	// CIDR of the network target for the route
-	Target string `json:"target"`
+	Target string `json:"target,omitempty"`
 
 	// Optional IP address to route the Target via
 	Via string `json:"via,omitempty"`
@@ -168,10 +168,10 @@ type Route struct {
 // NetworkDNS holds DNS information published to a network
 type NetworkDNS struct {
 	// Search domain
-	Domain string `json:"domain"`
+	Domain string `json:"domain,omitempty"`
 
 	// Array of up to 4 IP addresses that will be DNS servers
-	Servers []string `json:"servers"`
+	Servers []string `json:"servers,omitempty"`
 }
 
 // NetworkList is an array of Network structs
@@ -183,7 +183,7 @@ type IPV4AssignMode struct {
 	// Network controller assigns IP addresses from the IPv4 auto-assign range.
 	// If false and/or no Auto Assign Range is specified, the user must manually
 	// specify all IP addresses for network members
-	ZeroTier bool `json:"zt"`
+	ZeroTier *bool `json:"zt,omitempty"`
 }
 
 // IPV6AssignMode allows enabling and disabling of IPv6 address assignment modes.
@@ -199,15 +199,15 @@ type IPV6AssignMode struct {
 	// fcf9:b03a:1289:e92c:eee5::1 to every participant. Look closely and you'll see
 	// our /40 followed by another 40 bits: 89:e92c:eee5. This is the 40-bit ZeroTier
 	// address of the host.
-	ZT6Plane bool `json:"6plane"`
+	ZT6Plane *bool `json:"6plane,omitempty"`
 
 	// Assign a unique /128 for each device
-	RFC4193 bool `json:"rfc4193"`
+	RFC4193 *bool `json:"rfc4193,omitempty"`
 
 	// Network controller assigns IP addresses from the IPv6 auto-assign range.
 	// If false and/or no Auto Assign Range is specified, the user must manually
 	// specify all IP addresses for network members
-	ZeroTier bool `json:"zt"`
+	ZeroTier *bool `json:"zt,omitempty"`
 }
 
 // GetNetworks returns the list of your available networks
@@ -257,6 +257,15 @@ func (c *Client) UpdateNetwork(ctx context.Context, network *Network) (*Network,
 	}
 
 	return &res, nil
+}
+
+func (c *Client) UpdateNetworkRules(ctx context.Context, id, source string) (string, error) {
+	net, err := c.UpdateNetwork(ctx, &Network{ID: id, RulesSource: source})
+	if err != nil {
+		return "", err
+	}
+
+	return net.RulesSource, nil
 }
 
 func (c *Client) NewNetwork(ctx context.Context, name string, n *Network) (*Network, error) {
