@@ -90,7 +90,7 @@ type NetworkConfig struct {
 	// Whether or not Broadcast packets are allowed on the network
 	EnableBroadcast *bool `json:"enableBroadcast,omitempty"`
 
-	// 16 digit hexidecimal Network ID
+	// 16 digit hexadecimal Network ID
 	ID string `json:"id,omitempty"`
 
 	// Array of available IPRangees to use for address assignment
