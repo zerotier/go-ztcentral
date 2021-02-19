@@ -43,10 +43,14 @@ const (
 	BaseURLV1 = "https://my.zerotier.com/api"
 )
 
+var userAgent = fmt.Sprintf("go-ztcentral/%s", Version)
+
 type Client struct {
 	BaseURL    string
-	apiKey     string
 	HTTPClient *retryablehttp.Client
+
+	apiKey    string
+	userAgent string
 }
 
 // NewClient creates a client.
@@ -55,8 +59,10 @@ type Client struct {
 func NewClient(key string) *Client {
 	c := &Client{
 		BaseURL:    BaseURLV1,
-		apiKey:     key,
 		HTTPClient: retryablehttp.NewClient(),
+
+		apiKey:    key,
+		userAgent: userAgent,
 	}
 
 	return c
@@ -68,14 +74,31 @@ type errorResponse struct {
 	Code    int
 }
 
-func (c *Client) sendRequest(ctx context.Context, req *retryablehttp.Request, v interface{}) error {
+// SetUserAgent appends a custom user agent to the existing one, allowing
+// customization of it. It will be present where browsers typically put
+// extension data, such as Mozilla/5.0 (Firefox 80). The "Firefox 80" section
+// will be replaced with what is provided here.
+//
+// While this code is intended to be used by third party code, be advised that
+// this does nothing but identify your product to the zerotier network. Nothing
+// you put here should change the client behavior.
+func (c *Client) SetUserAgent(ua string) {
+	c.userAgent = fmt.Sprintf("%s (%s)", c.userAgent, ua)
+}
+
+func (c *Client) prepareRequest(ctx context.Context, req *retryablehttp.Request) *retryablehttp.Request {
 	req = req.WithContext(ctx)
 
+	req.Header.Set("User-Agent", c.userAgent)
 	req.Header.Set("Content-Type", "application/json; charset=utf-8")
 	req.Header.Set("Accept", "application/json; charset=utf-8")
 	req.Header.Set("Authorization", fmt.Sprintf("bearer %s", c.apiKey))
 
-	res, err := c.HTTPClient.Do(req)
+	return req
+}
+
+func (c *Client) sendRequest(ctx context.Context, req *retryablehttp.Request, v interface{}) error {
+	res, err := c.HTTPClient.Do(c.prepareRequest(ctx, req))
 	if err != nil {
 		return err
 	}
