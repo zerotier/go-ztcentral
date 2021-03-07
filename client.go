@@ -40,11 +40,13 @@ import (
 )
 
 const (
+	// BaseURLV1 is the URL to ZeroTier Central
 	BaseURLV1 = "https://my.zerotier.com/api"
 )
 
 var userAgent = fmt.Sprintf("go-ztcentral/%s", Version)
 
+// Client is the zerotier central client.
 type Client struct {
 	BaseURL    string
 	HTTPClient *retryablehttp.Client
