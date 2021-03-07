@@ -32,7 +32,6 @@ package ztcentral
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 
@@ -70,11 +69,33 @@ func NewClient(key string) *Client {
 	return c
 }
 
+// ErrorType is the type of error we recieved while making the HTTP query.
+type ErrorType uint
+
+const (
+	// ErrorTypeZeroTier indicates that the error came from ZeroTier, and the
+	// ZeroTier API error type will be stored as a string in `Type` of the
+	// ErrorResponse.
+	ErrorTypeZeroTier = 0
+
+	// ErrorTypeHTTP is a standard HTTP error. Code will contain the status code
+	// and Message will contain an informative message about it.
+	ErrorTypeHTTP = iota
+
+	// ErrorTypeJSON is for errors in JSON marshaling transactions.
+	ErrorTypeJSON = iota
+)
+
 // ErrorResponse is the response to an error
 type ErrorResponse struct {
-	Type    string `json:"type"`
-	Message string `json:"message"`
-	Code    int
+	Type      string `json:"type"`
+	Message   string `json:"message"`
+	Code      int
+	ErrorType ErrorType
+}
+
+func (e ErrorResponse) Error() string {
+	return e.Message
 }
 
 // SetUserAgent appends a custom user agent to the existing one, allowing
@@ -103,22 +124,32 @@ func (c *Client) prepareRequest(ctx context.Context, req *retryablehttp.Request)
 func (c *Client) sendRequest(ctx context.Context, req *retryablehttp.Request, v interface{}) error {
 	res, err := c.HTTPClient.Do(c.prepareRequest(ctx, req))
 	if err != nil {
-		return err
+		return ErrorResponse{
+			ErrorType: ErrorTypeHTTP,
+			Message:   err.Error(),
+		}
 	}
 	defer res.Body.Close()
 
 	if res.StatusCode < http.StatusOK || res.StatusCode >= http.StatusBadRequest {
 		var errRes ErrorResponse
 		if err = json.NewDecoder(res.Body).Decode(&errRes); err == nil {
-			return errors.New(errRes.Message)
+			errRes.ErrorType = ErrorTypeZeroTier
+			return errRes
 		}
 
-		return fmt.Errorf("unknown error, status code: %d", res.StatusCode)
+		return ErrorResponse{
+			Message:   fmt.Sprintf("unknown error, status code: %d", res.StatusCode),
+			ErrorType: ErrorTypeHTTP,
+		}
 	}
 
 	if v != nil {
 		if err = json.NewDecoder(res.Body).Decode(v); err != nil {
-			return err
+			return ErrorResponse{
+				Message:   err.Error(),
+				ErrorType: ErrorTypeJSON,
+			}
 		}
 	}
 

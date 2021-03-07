@@ -5,9 +5,30 @@ import (
 	"fmt"
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/hashicorp/go-retryablehttp"
+	"github.com/zerotier/go-ztcentral/pkg/testutil"
 )
+
+func TestErrors(t *testing.T) {
+	testutil.NeedsToken(t)
+
+	c := NewClient(testutil.InitTokenFromEnv())
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+
+	_, err := c.GetMember(ctx, "1", "1")
+	switch err.(type) {
+	case ErrorResponse:
+		if err.(ErrorResponse).ErrorType != ErrorTypeHTTP {
+			t.Fatal("Unexpected ErrorType in ErrorResponse; expected HTTP")
+		}
+	default:
+		t.Fatal("Unexpected type in http response")
+	}
+}
 
 func TestHeaders(t *testing.T) {
 	type testinfo struct {
