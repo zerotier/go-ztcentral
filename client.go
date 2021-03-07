@@ -40,11 +40,13 @@ import (
 )
 
 const (
+	// BaseURLV1 is the URL to ZeroTier Central
 	BaseURLV1 = "https://my.zerotier.com/api"
 )
 
 var userAgent = fmt.Sprintf("go-ztcentral/%s", Version)
 
+// Client is the zerotier central client.
 type Client struct {
 	BaseURL    string
 	HTTPClient *retryablehttp.Client
@@ -68,7 +70,8 @@ func NewClient(key string) *Client {
 	return c
 }
 
-type errorResponse struct {
+// ErrorResponse is the response to an error
+type ErrorResponse struct {
 	Type    string `json:"type"`
 	Message string `json:"message"`
 	Code    int
@@ -105,7 +108,7 @@ func (c *Client) sendRequest(ctx context.Context, req *retryablehttp.Request, v 
 	defer res.Body.Close()
 
 	if res.StatusCode < http.StatusOK || res.StatusCode >= http.StatusBadRequest {
-		var errRes errorResponse
+		var errRes ErrorResponse
 		if err = json.NewDecoder(res.Body).Decode(&errRes); err == nil {
 			return errors.New(errRes.Message)
 		}
