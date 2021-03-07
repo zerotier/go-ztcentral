@@ -70,7 +70,8 @@ func NewClient(key string) *Client {
 	return c
 }
 
-type errorResponse struct {
+// ErrorResponse is the response to an error
+type ErrorResponse struct {
 	Type    string `json:"type"`
 	Message string `json:"message"`
 	Code    int
@@ -107,7 +108,7 @@ func (c *Client) sendRequest(ctx context.Context, req *retryablehttp.Request, v 
 	defer res.Body.Close()
 
 	if res.StatusCode < http.StatusOK || res.StatusCode >= http.StatusBadRequest {
-		var errRes errorResponse
+		var errRes ErrorResponse
 		if err = json.NewDecoder(res.Body).Decode(&errRes); err == nil {
 			return errors.New(errRes.Message)
 		}
