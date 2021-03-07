@@ -1,5 +1,4 @@
-go-ztcentral
-===
+# go-ztcentral
 
 Golang client library for interacting with the [ZeroTier Central Network Management Portal](https://my.zerotier.com)
 
@@ -44,8 +43,14 @@ Example:
         }
     }
 
-License
-===
+# Development
+
+Some useful make tasks:
+
+- `make reflex-lint` and `make reflex-test` run the linters/testers with file watchers.
+- `VERSION=x.y.z make release` - make a release with version x.y.z. Edits files and pushes tags.
+
+# License
 
 Copyright (c) 2021, ZeroTier, Inc.
 All rights reserved.
