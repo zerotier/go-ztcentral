@@ -30,6 +30,8 @@ package ztcentral
 
 import (
 	"context"
+	"fmt"
+	"reflect"
 	"testing"
 	"time"
 
@@ -76,7 +78,7 @@ func TestGetMember(t *testing.T) {
 	}
 }
 
-func TestGetMembers(t *testing.T) {
+func TestCRUDMembers(t *testing.T) {
 	testutil.NeedsToken(t)
 
 	c := NewClient(testutil.InitTokenFromEnv())
@@ -120,6 +122,54 @@ func TestGetMembers(t *testing.T) {
 
 		if id.IDString() != member.Config.MemberID {
 			t.Fatalf("IDs were not equal for member %q", member.Name)
+		}
+	}
+
+	table := map[string]struct {
+		update   func(member *Member)
+		validate func(member *Member) error
+	}{
+		"capabilities": {
+			update: func(member *Member) {
+				member.Config.Capabilities = []uint{0, 1, 2}
+			},
+			validate: func(member *Member) error {
+				if !reflect.DeepEqual(member.Config.Capabilities, []uint{0, 1, 2}) {
+					return fmt.Errorf("DeepEqual did not succeed on capabilities; was %v", member.Config.Capabilities)
+				}
+
+				return nil
+			},
+		},
+		"description": {
+			update: func(member *Member) {
+				member.Description = "updated"
+			},
+			validate: func(member *Member) error {
+				if member.Description != "updated" {
+					return fmt.Errorf("updated value is not present, is: %v", member.Description)
+				}
+
+				return nil
+			},
+		},
+	}
+
+	for _, member := range members {
+		for testName, harness := range table {
+			harness.update(&member)
+			if _, err := c.UpdateMember(ctx, &member); err != nil {
+				t.Fatalf("%q: error updating member: %v", testName, err)
+			}
+
+			newMember, err := c.GetMember(ctx, member.NetworkID, member.MemberID)
+			if err != nil {
+				t.Fatalf("%q: While retrieving updated member: %v", testName, err)
+			}
+
+			if err := harness.validate(newMember); err != nil {
+				t.Fatalf("%q: While validating: %v", testName, err)
+			}
 		}
 	}
 }
