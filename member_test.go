@@ -158,17 +158,22 @@ func TestCRUDMembers(t *testing.T) {
 	for _, member := range members {
 		for testName, harness := range table {
 			harness.update(&member)
-			if _, err := c.UpdateMember(ctx, &member); err != nil {
+			updated, err := c.UpdateMember(ctx, &member)
+			if err != nil {
 				t.Fatalf("%q: error updating member: %v", testName, err)
+			}
+
+			if err := harness.validate(updated); err != nil {
+				t.Fatalf("%q: While validating returned object from update call: %v", testName, err)
 			}
 
 			newMember, err := c.GetMember(ctx, member.NetworkID, member.MemberID)
 			if err != nil {
-				t.Fatalf("%q: While retrieving updated member: %v", testName, err)
+				t.Fatalf("%q: While retrieving updated member from fetch: %v", testName, err)
 			}
 
 			if err := harness.validate(newMember); err != nil {
-				t.Fatalf("%q: While validating: %v", testName, err)
+				t.Fatalf("%q: While validating updated member from fetch: %v", testName, err)
 			}
 		}
 	}
