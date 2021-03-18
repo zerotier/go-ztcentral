@@ -15,7 +15,7 @@ var TokenFile = "test-token.txt"
 
 // TokenEnv is the name of the environment variable InitTokenFromEnv() reads.
 // Also overridable.
-var TokenEnv = "ZEROTIER_CONTROLLER_TOKEN"
+var TokenEnv = "ZEROTIER_CENTRAL_TOKEN"
 
 // InitTokenFromEnv initializes the token from either the file or the
 // environment variable. See TokenEnv and TokenFile.
@@ -28,7 +28,7 @@ func InitTokenFromEnv() string {
 func InitToken(controllerToken string) string {
 	if controllerToken == "" {
 		if fi, err := os.Stat("test-token.txt"); err != nil {
-			fmt.Fprintln(os.Stderr, "test-token.txt not present in tree; ZEROTIER_CONTROLLER_TOKEN is required in environment for many tests.")
+			fmt.Fprintln(os.Stderr, "test-token.txt not present in tree; ZEROTIER_CENTRAL_TOKEN is required in environment for many tests.")
 		} else if fi.Mode()&os.ModeIrregular != 0 {
 			panic("test-token.txt is not a regular file; not sure what to do here, so bailing")
 		} else {
