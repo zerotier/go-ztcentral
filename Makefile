@@ -20,6 +20,9 @@ bin/reflex:
 generate:
 	go generate -v ./...
 
+update-openapi:
+	curl -sSL http://apidocs.zerotier.com/central-v1/api-spec.json >spec.json
+
 release:
 ifeq (${VERSION},)
 	@echo "Please set VERSION before running this make task"
