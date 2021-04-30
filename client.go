@@ -30,12 +30,12 @@
 package ztcentral
 
 import (
-	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 
-	"github.com/hashicorp/go-retryablehttp"
+	"github.com/zerotier/go-ztcentral/pkg/spec"
 )
 
 const (
@@ -47,55 +47,34 @@ var userAgent = fmt.Sprintf("go-ztcentral/%s", Version)
 
 // Client is the zerotier central client.
 type Client struct {
-	BaseURL    string
-	HTTPClient *retryablehttp.Client
+	specClient *spec.Client
+	httpClient *http.Client
 
 	apiKey    string
 	userAgent string
 }
 
+// ErrStatus is returned when the response code is not 200.
+var ErrStatus = errors.New("status code was not 200")
+
 // NewClient creates a client.
 // key is an API key for your ZeroTier Central that you can generate after login.
 // It returns a fully initialized client.
-func NewClient(key string) *Client {
+func NewClient(key string) (*Client, error) {
 	c := &Client{
-		BaseURL:    BaseURLV1,
-		HTTPClient: retryablehttp.NewClient(),
-
 		apiKey:    key,
 		userAgent: userAgent,
 	}
 
-	return c
-}
+	c.httpClient = &http.Client{Transport: c}
 
-// ErrorType is the type of error we recieved while making the HTTP query.
-type ErrorType uint
+	var err error
+	c.specClient, err = spec.NewClient(BaseURLV1, spec.WithHTTPClient(c.httpClient))
+	if err != nil {
+		return nil, err
+	}
 
-const (
-	// ErrorTypeZeroTier indicates that the error came from ZeroTier, and the
-	// ZeroTier API error type will be stored as a string in `Type` of the
-	// ErrorResponse.
-	ErrorTypeZeroTier = 0
-
-	// ErrorTypeHTTP is a standard HTTP error. Code will contain the status code
-	// and Message will contain an informative message about it.
-	ErrorTypeHTTP = iota
-
-	// ErrorTypeJSON is for errors in JSON marshaling transactions.
-	ErrorTypeJSON = iota
-)
-
-// ErrorResponse is the response to an error
-type ErrorResponse struct {
-	Type      string `json:"type"`
-	Message   string `json:"message"`
-	Code      int
-	ErrorType ErrorType
-}
-
-func (e ErrorResponse) Error() string {
-	return e.Message
+	return c, nil
 }
 
 // SetUserAgent appends a custom user agent to the existing one, allowing
@@ -110,48 +89,31 @@ func (c *Client) SetUserAgent(ua string) {
 	c.userAgent = fmt.Sprintf("%s (%s)", c.userAgent, ua)
 }
 
-func (c *Client) prepareRequest(ctx context.Context, req *retryablehttp.Request) *retryablehttp.Request {
-	req = req.WithContext(ctx)
-
+// RoundTrip conforms the client to http.RoundTrip
+func (c *Client) RoundTrip(req *http.Request) (*http.Response, error) {
 	req.Header.Set("User-Agent", c.userAgent)
 	req.Header.Set("Content-Type", "application/json; charset=utf-8")
 	req.Header.Set("Accept", "application/json; charset=utf-8")
 	req.Header.Set("Authorization", fmt.Sprintf("bearer %s", c.apiKey))
 
-	return req
+	return http.DefaultClient.Do(req)
 }
 
-func (c *Client) sendRequest(ctx context.Context, req *retryablehttp.Request, v interface{}) error {
-	res, err := c.HTTPClient.Do(c.prepareRequest(ctx, req))
+func (c *Client) decode(resp *http.Response, i interface{}) error {
+	if resp.StatusCode != 200 {
+		return fmt.Errorf("Status code %v: %w", resp.StatusCode, ErrStatus)
+	}
+	defer resp.Body.Close()
+
+	return json.NewDecoder(resp.Body).Decode(i)
+}
+
+func (c *Client) decomposeStruct(i interface{}) (map[string]interface{}, error) {
+	res, err := json.Marshal(i)
 	if err != nil {
-		return ErrorResponse{
-			ErrorType: ErrorTypeHTTP,
-			Message:   err.Error(),
-		}
-	}
-	defer res.Body.Close()
-
-	if res.StatusCode < http.StatusOK || res.StatusCode >= http.StatusBadRequest {
-		var errRes ErrorResponse
-		if err = json.NewDecoder(res.Body).Decode(&errRes); err == nil {
-			errRes.ErrorType = ErrorTypeZeroTier
-			return errRes
-		}
-
-		return ErrorResponse{
-			Message:   fmt.Sprintf("unknown error, status code: %d", res.StatusCode),
-			ErrorType: ErrorTypeHTTP,
-		}
+		return nil, err
 	}
 
-	if v != nil {
-		if err = json.NewDecoder(res.Body).Decode(v); err != nil {
-			return ErrorResponse{
-				Message:   err.Error(),
-				ErrorType: ErrorTypeJSON,
-			}
-		}
-	}
-
-	return nil
+	m := map[string]interface{}{}
+	return m, json.Unmarshal(res, &m)
 }
