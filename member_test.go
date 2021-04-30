@@ -133,14 +133,14 @@ func TestCRUDMembers(t *testing.T) {
 	}
 
 	table := map[string]struct {
-		update   func(member spec.Member)
-		validate func(member spec.Member) error
+		update   func(member *spec.Member)
+		validate func(member *spec.Member) error
 	}{
 		"capabilities": {
-			update: func(member spec.Member) {
+			update: func(member *spec.Member) {
 				member.Config.Capabilities = &[]int{0, 1, 2}
 			},
-			validate: func(member spec.Member) error {
+			validate: func(member *spec.Member) error {
 				if !reflect.DeepEqual(*member.Config.Capabilities, []int{0, 1, 2}) {
 					return fmt.Errorf("DeepEqual did not succeed on capabilities; was %+v", *member.Config.Capabilities)
 				}
@@ -148,30 +148,29 @@ func TestCRUDMembers(t *testing.T) {
 				return nil
 			},
 		},
-		// FIXME broken until central is updated
-		// "description": {
-		// 	update: func(member spec.Member) {
-		// 		member.Description = stringp("updated")
-		// 	},
-		// 	validate: func(member spec.Member) error {
-		// 		if *member.Description != "updated" {
-		// 			return fmt.Errorf("updated value is not present, is: %+v", *member.Description)
-		// 		}
-		//
-		// 		return nil
-		// 	},
-		// },
+		"description": {
+			update: func(member *spec.Member) {
+				member.Description = stringp("updated")
+			},
+			validate: func(member *spec.Member) error {
+				if *member.Description != "updated" {
+					return fmt.Errorf("updated value is not present, is: %+v", *member.Description)
+				}
+
+				return nil
+			},
+		},
 	}
 
 	for _, member := range members {
 		for testName, harness := range table {
-			harness.update(member)
+			harness.update(&member)
 			updated, err := c.UpdateMember(ctx, *member.NetworkId, *member.NodeId, member)
 			if err != nil {
 				t.Fatalf("%q: error updating member: %v", testName, err)
 			}
 
-			if err := harness.validate(updated); err != nil {
+			if err := harness.validate(&updated); err != nil {
 				t.Fatalf("%q: While validating returned object from update call: %v", testName, err)
 			}
 
@@ -180,7 +179,7 @@ func TestCRUDMembers(t *testing.T) {
 				t.Fatalf("%q: While retrieving updated member from fetch: %v", testName, err)
 			}
 
-			if err := harness.validate(newMember); err != nil {
+			if err := harness.validate(&newMember); err != nil {
 				t.Fatalf("%q: While validating updated member from fetch: %v", testName, err)
 			}
 		}
