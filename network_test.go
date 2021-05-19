@@ -215,3 +215,56 @@ func TestGetNetworks(t *testing.T) {
 		}
 	}
 }
+
+func TestUpdateNetworks(t *testing.T) {
+	testutil.NeedsToken(t)
+
+	c, err := NewClient(testutil.InitTokenFromEnv())
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+
+	n, err := c.NewNetwork(ctx, testutil.RandomString(30, 5), &spec.Network{
+		Config: &spec.NetworkConfig{
+			Routes: &[]spec.Route{
+				{
+					Target: stringp("10.9.8.0/24"),
+				},
+			},
+			IpAssignmentPools: &[]spec.IPRange{
+				{
+					IpRangeStart: stringp("10.9.8.1"),
+					IpRangeEnd:   stringp("10.9.8.255"),
+				},
+			},
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	n.Config.IpAssignmentPools = &[]spec.IPRange{
+		{
+			IpRangeStart: stringp("10.9.8.1"),
+			IpRangeEnd:   stringp("10.9.8.7"),
+		},
+	}
+
+	n2, err := c.UpdateNetwork(ctx, *n.Id, n)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if *(*n2.Config.IpAssignmentPools)[0].IpRangeEnd != "10.9.8.7" {
+		t.Fatal("configurations did not match")
+	}
+
+	n3, err := c.GetNetwork(ctx, *n.Id)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if *(*n3.Config.IpAssignmentPools)[0].IpRangeEnd != "10.9.8.7" {
+		t.Fatal("configurations did not match")
+	}
+}
