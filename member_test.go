@@ -51,7 +51,7 @@ func TestGetMember(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
 
-	net, err := c.NewNetwork(ctx, "get-member-network", spec.Network{})
+	net, err := c.NewNetwork(ctx, "get-member-network", &spec.Network{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -93,7 +93,7 @@ func TestCRUDMembers(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
 
-	net, err := c.NewNetwork(ctx, "get-members-network", spec.Network{})
+	net, err := c.NewNetwork(ctx, "get-members-network", &spec.Network{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -164,13 +164,13 @@ func TestCRUDMembers(t *testing.T) {
 
 	for _, member := range members {
 		for testName, harness := range table {
-			harness.update(&member)
+			harness.update(member)
 			updated, err := c.UpdateMember(ctx, *member.NetworkId, *member.NodeId, member)
 			if err != nil {
 				t.Fatalf("%q: error updating member: %v", testName, err)
 			}
 
-			if err := harness.validate(&updated); err != nil {
+			if err := harness.validate(updated); err != nil {
 				t.Fatalf("%q: While validating returned object from update call: %v", testName, err)
 			}
 
@@ -179,7 +179,7 @@ func TestCRUDMembers(t *testing.T) {
 				t.Fatalf("%q: While retrieving updated member from fetch: %v", testName, err)
 			}
 
-			if err := harness.validate(&newMember); err != nil {
+			if err := harness.validate(newMember); err != nil {
 				t.Fatalf("%q: While validating updated member from fetch: %v", testName, err)
 			}
 		}

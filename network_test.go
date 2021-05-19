@@ -53,7 +53,7 @@ func TestNetworkCRUD(t *testing.T) {
 		t.Fatal("Was able to fetch network we don't know about")
 	}
 
-	net, err := c.NewNetwork(ctx, "create-network", spec.Network{})
+	net, err := c.NewNetwork(ctx, "create-network", &spec.Network{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -97,7 +97,7 @@ func TestNewNetworkWithNetworkConfig(t *testing.T) {
 		Name: stringp("overridden"),
 	}
 
-	net, err := c.NewNetwork(ctx, "real", spec.Network{Config: &nc})
+	net, err := c.NewNetwork(ctx, "real", &spec.Network{Config: &nc})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -119,7 +119,7 @@ func TestNewNetworkWithNetworkConfig(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	net, err = c.NewNetwork(ctx, "real", spec.Network{
+	net, err = c.NewNetwork(ctx, "real", &spec.Network{
 		RulesSource: stringp("drop;"),
 		Config: &spec.NetworkConfig{
 			IpAssignmentPools: &[]spec.IPRange{
@@ -179,7 +179,7 @@ func TestGetNetworks(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
 
-	networks := map[string]spec.Network{}
+	networks := map[string]*spec.Network{}
 
 	t.Cleanup(func() {
 		for name, net := range networks {
@@ -191,7 +191,7 @@ func TestGetNetworks(t *testing.T) {
 
 	for i := 0; i < 20; i++ {
 		name := testutil.RandomString(30, 5)
-		net, err := c.NewNetwork(ctx, name, spec.Network{})
+		net, err := c.NewNetwork(ctx, name, &spec.Network{})
 		if err != nil {
 			t.Fatal(err)
 		}
