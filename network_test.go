@@ -53,7 +53,7 @@ func TestNetworkCRUD(t *testing.T) {
 		t.Fatal("Was able to fetch network we don't know about")
 	}
 
-	net, err := c.NewNetwork(ctx, "create-network", spec.Network{})
+	net, err := c.NewNetwork(ctx, "create-network", &spec.Network{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -97,7 +97,7 @@ func TestNewNetworkWithNetworkConfig(t *testing.T) {
 		Name: stringp("overridden"),
 	}
 
-	net, err := c.NewNetwork(ctx, "real", spec.Network{Config: &nc})
+	net, err := c.NewNetwork(ctx, "real", &spec.Network{Config: &nc})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -119,7 +119,7 @@ func TestNewNetworkWithNetworkConfig(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	net, err = c.NewNetwork(ctx, "real", spec.Network{
+	net, err = c.NewNetwork(ctx, "real", &spec.Network{
 		RulesSource: stringp("drop;"),
 		Config: &spec.NetworkConfig{
 			IpAssignmentPools: &[]spec.IPRange{
@@ -179,7 +179,7 @@ func TestGetNetworks(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
 
-	networks := map[string]spec.Network{}
+	networks := map[string]*spec.Network{}
 
 	t.Cleanup(func() {
 		for name, net := range networks {
@@ -191,7 +191,7 @@ func TestGetNetworks(t *testing.T) {
 
 	for i := 0; i < 20; i++ {
 		name := testutil.RandomString(30, 5)
-		net, err := c.NewNetwork(ctx, name, spec.Network{})
+		net, err := c.NewNetwork(ctx, name, &spec.Network{})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -213,5 +213,58 @@ func TestGetNetworks(t *testing.T) {
 		if *net.Config.Id != *network.Config.Id {
 			t.Fatalf("ID mismatch for %q", *network.Config.Name)
 		}
+	}
+}
+
+func TestUpdateNetworks(t *testing.T) {
+	testutil.NeedsToken(t)
+
+	c, err := NewClient(testutil.InitTokenFromEnv())
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+
+	n, err := c.NewNetwork(ctx, testutil.RandomString(30, 5), &spec.Network{
+		Config: &spec.NetworkConfig{
+			Routes: &[]spec.Route{
+				{
+					Target: stringp("10.9.8.0/24"),
+				},
+			},
+			IpAssignmentPools: &[]spec.IPRange{
+				{
+					IpRangeStart: stringp("10.9.8.1"),
+					IpRangeEnd:   stringp("10.9.8.255"),
+				},
+			},
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	n.Config.IpAssignmentPools = &[]spec.IPRange{
+		{
+			IpRangeStart: stringp("10.9.8.1"),
+			IpRangeEnd:   stringp("10.9.8.7"),
+		},
+	}
+
+	n2, err := c.UpdateNetwork(ctx, *n.Id, n)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if *(*n2.Config.IpAssignmentPools)[0].IpRangeEnd != "10.9.8.7" {
+		t.Fatal("configurations did not match")
+	}
+
+	n3, err := c.GetNetwork(ctx, *n.Id)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if *(*n3.Config.IpAssignmentPools)[0].IpRangeEnd != "10.9.8.7" {
+		t.Fatal("configurations did not match")
 	}
 }

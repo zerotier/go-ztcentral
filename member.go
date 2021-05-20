@@ -35,41 +35,41 @@ import (
 	"github.com/zerotier/go-ztcentral/pkg/spec"
 )
 
-func (c *Client) GetMembers(ctx context.Context, networkID string) ([]spec.Member, error) {
+func (c *Client) GetMembers(ctx context.Context, networkID string) ([]*spec.Member, error) {
 	resp, err := c.specClient.GetNetworkMemberList(ctx, networkID)
 	if err != nil {
 		return nil, err
 	}
 
-	var ml []spec.Member
+	var ml []*spec.Member
 
 	return ml, c.decode(resp, &ml)
 }
 
-func (c *Client) GetMember(ctx context.Context, networkID, memberID string) (spec.Member, error) {
-	var member spec.Member
+func (c *Client) GetMember(ctx context.Context, networkID, memberID string) (*spec.Member, error) {
+	member := &spec.Member{}
 
 	resp, err := c.specClient.GetNetworkMember(ctx, networkID, memberID)
 	if err != nil {
-		return member, err
+		return nil, err
 	}
 
-	return member, c.decode(resp, &member)
+	return member, c.decode(resp, member)
 }
 
-func (c *Client) UpdateMember(ctx context.Context, networkID, memberID string, m spec.Member) (spec.Member, error) {
-	var member spec.Member
+func (c *Client) UpdateMember(ctx context.Context, networkID, memberID string, m *spec.Member) (*spec.Member, error) {
+	member := &spec.Member{}
 
-	resp, err := c.specClient.UpdateNetworkMember(ctx, networkID, memberID, spec.UpdateNetworkMemberJSONRequestBody(m))
+	resp, err := c.specClient.UpdateNetworkMember(ctx, networkID, memberID, spec.UpdateNetworkMemberJSONRequestBody(*m))
 	if err != nil {
-		return member, err
+		return nil, err
 	}
 
-	return member, c.decode(resp, &member)
+	return member, c.decode(resp, member)
 }
 
-func (c *Client) CreateAuthorizedMember(ctx context.Context, networkID, memberID, name string) (spec.Member, error) {
-	m := spec.Member{
+func (c *Client) CreateAuthorizedMember(ctx context.Context, networkID, memberID, name string) (*spec.Member, error) {
+	m := &spec.Member{
 		NetworkId: &networkID,
 		NodeId:    &memberID,
 		Name:      &name,
@@ -81,8 +81,8 @@ func (c *Client) CreateAuthorizedMember(ctx context.Context, networkID, memberID
 	return c.UpdateMember(ctx, networkID, memberID, m)
 }
 
-func (c *Client) AuthorizeMember(ctx context.Context, networkID, memberID string) (spec.Member, error) {
-	m := spec.Member{
+func (c *Client) AuthorizeMember(ctx context.Context, networkID, memberID string) (*spec.Member, error) {
+	m := &spec.Member{
 		Config: &spec.MemberConfig{
 			Authorized: boolp(true),
 		},
@@ -91,8 +91,8 @@ func (c *Client) AuthorizeMember(ctx context.Context, networkID, memberID string
 	return c.UpdateMember(ctx, networkID, memberID, m)
 }
 
-func (c *Client) DeauthorizeMember(ctx context.Context, networkID, memberID string) (spec.Member, error) {
-	m := spec.Member{
+func (c *Client) DeauthorizeMember(ctx context.Context, networkID, memberID string) (*spec.Member, error) {
+	m := &spec.Member{
 		Config: &spec.MemberConfig{
 			Authorized: boolp(false),
 		},

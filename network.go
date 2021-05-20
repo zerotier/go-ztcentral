@@ -36,8 +36,8 @@ import (
 )
 
 // GetNetworks returns the list of your available networks
-func (c *Client) GetNetworks(ctx context.Context) ([]spec.Network, error) {
-	var res []spec.Network
+func (c *Client) GetNetworks(ctx context.Context) ([]*spec.Network, error) {
+	var res []*spec.Network
 	resp, err := c.specClient.GetNetworkList(ctx)
 	if err != nil {
 		return res, err
@@ -47,21 +47,21 @@ func (c *Client) GetNetworks(ctx context.Context) ([]spec.Network, error) {
 }
 
 // GetNetwork returns an individual network specified by networkID
-func (c *Client) GetNetwork(ctx context.Context, networkID string) (spec.Network, error) {
-	var res spec.Network
+func (c *Client) GetNetwork(ctx context.Context, networkID string) (*spec.Network, error) {
+	res := &spec.Network{}
 
 	resp, err := c.specClient.GetNetworkByID(ctx, networkID)
 	if err != nil {
 		return res, err
 	}
 
-	return res, c.decode(resp, &res)
+	return res, c.decode(resp, res)
 }
 
-func (c *Client) UpdateNetwork(ctx context.Context, id string, network spec.Network) (spec.Network, error) {
-	var res spec.Network
+func (c *Client) UpdateNetwork(ctx context.Context, id string, network *spec.Network) (*spec.Network, error) {
+	res := &spec.Network{}
 
-	resp, err := c.specClient.UpdateNetwork(ctx, id, spec.UpdateNetworkJSONRequestBody(network))
+	resp, err := c.specClient.UpdateNetwork(ctx, id, spec.UpdateNetworkJSONRequestBody(*network))
 	if err != nil {
 		return res, err
 	}
@@ -70,7 +70,7 @@ func (c *Client) UpdateNetwork(ctx context.Context, id string, network spec.Netw
 }
 
 func (c *Client) UpdateNetworkRules(ctx context.Context, id, source string) (string, error) {
-	net, err := c.UpdateNetwork(ctx, id, spec.Network{Id: &id, RulesSource: &source})
+	net, err := c.UpdateNetwork(ctx, id, &spec.Network{Id: &id, RulesSource: &source})
 	if err != nil {
 		return "", err
 	}
@@ -82,14 +82,14 @@ func (c *Client) UpdateNetworkRules(ctx context.Context, id, source string) (str
 	return *net.RulesSource, nil
 }
 
-func (c *Client) NewNetwork(ctx context.Context, name string, n spec.Network) (spec.Network, error) {
+func (c *Client) NewNetwork(ctx context.Context, name string, n *spec.Network) (*spec.Network, error) {
 	if n.Config != nil {
 		n.Config.Name = &name
 	} else {
 		n.Config = &spec.NetworkConfig{Name: &name}
 	}
 
-	var newnet spec.Network
+	newnet := &spec.Network{}
 
 	net, err := c.decomposeStruct(n)
 	if err != nil {
@@ -101,7 +101,7 @@ func (c *Client) NewNetwork(ctx context.Context, name string, n spec.Network) (s
 		return newnet, err
 	}
 
-	return newnet, c.decode(resp, &newnet)
+	return newnet, c.decode(resp, newnet)
 }
 
 func (c *Client) DeleteNetwork(ctx context.Context, networkID string) error {
