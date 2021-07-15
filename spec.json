@@ -988,7 +988,8 @@
         "properties": {
           "id": {
             "type": "string",
-            "example": "8056c2e21c000001"
+            "example": "8056c2e21c000001",
+            "readOnly": true
           },
           "clock": {
             "type": "integer",
@@ -1044,13 +1045,15 @@
           "id": {
             "type": "string",
             "example": "8056c2e21c000001",
-            "description": "Network ID"
+            "description": "Network ID",
+            "readOnly": true
           },
           "creationTime": {
             "type": "integer",
             "format": "int64",
             "example": 1442292672978,
-            "description": "Time the network was created"
+            "description": "Time the network was created",
+            "readOnly": true
           },
           "capabilities": {
             "type": "array",
