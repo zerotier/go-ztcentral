@@ -175,6 +175,9 @@ func TestGetNetworks(t *testing.T) {
 	testutil.NeedsToken(t)
 
 	c, err := NewClient(testutil.InitTokenFromEnv())
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
@@ -220,6 +223,9 @@ func TestUpdateNetworks(t *testing.T) {
 	testutil.NeedsToken(t)
 
 	c, err := NewClient(testutil.InitTokenFromEnv())
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
