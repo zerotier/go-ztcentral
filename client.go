@@ -30,6 +30,7 @@
 package ztcentral
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -116,4 +117,30 @@ func (c *Client) decomposeStruct(i interface{}) (map[string]interface{}, error) 
 
 	m := map[string]interface{}{}
 	return m, json.Unmarshal(res, &m)
+}
+
+// User gets the user of the client API token, via the /status endpoint.
+//
+// For the full status, see Status()
+func (c *Client) User(ctx context.Context) (*spec.User, error) {
+	res, err := c.Status(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return res.User, nil
+}
+
+// Status returns the full status response of the /status API endpoint, which
+// contains various bits of information about the client's account.
+//
+// For just the User information, see User().
+func (c *Client) Status(ctx context.Context) (*spec.Status, error) {
+	res := &spec.Status{}
+	resp, err := c.specClient.GetStatus(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return res, c.decode(resp, res)
 }

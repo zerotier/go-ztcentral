@@ -21,7 +21,8 @@ generate:
 	go generate -v ./...
 
 update-openapi:
-	curl -sSL http://apidocs.zerotier.com/central-v1/api-spec.json >spec.json
+	curl -sSL https://raw.githubusercontent.com/zerotier/docs/master/static/openapi/centralv1.json >spec.json
+	go generate ./...
 
 release:
 ifeq (${VERSION},)

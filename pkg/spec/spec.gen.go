@@ -324,6 +324,31 @@ type Route struct {
 	Via    *string `json:"via"`
 }
 
+// Status defines model for Status.
+type Status struct {
+	ApiVersion *string `json:"apiVersion,omitempty"`
+
+	// Current time on server
+	Clock        *int64  `json:"clock,omitempty"`
+	Id           *string `json:"id,omitempty"`
+	LoginMethods *struct {
+		Facebook *bool `json:"facebook,omitempty"`
+		Github   *bool `json:"github,omitempty"`
+		Google   *bool `json:"google,omitempty"`
+		Local    *bool `json:"local,omitempty"`
+		Oidc     *bool `json:"oidc,omitempty"`
+		Saml     *bool `json:"saml,omitempty"`
+		Twitter  *bool `json:"twitter,omitempty"`
+	} `json:"loginMethods,omitempty"`
+	ReadOnlyMode *bool   `json:"readOnlyMode,omitempty"`
+	Type         *string `json:"type,omitempty"`
+
+	// Uptime on server
+	Uptime  *int64  `json:"uptime,omitempty"`
+	User    *User   `json:"user,omitempty"`
+	Version *string `json:"version,omitempty"`
+}
+
 // User defines model for User.
 type User struct {
 	Auth *struct {
@@ -577,6 +602,9 @@ type ClientInterface interface {
 
 	// GetRandomToken request
 	GetRandomToken(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetStatus request
+	GetStatus(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// DeleteUserByID request
 	DeleteUserByID(ctx context.Context, userID string, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -852,6 +880,18 @@ func (c *Client) GetOrganizationMembers(ctx context.Context, orgID string, reqEd
 
 func (c *Client) GetRandomToken(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetRandomTokenRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetStatus(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetStatusRequest(c.Server)
 	if err != nil {
 		return nil, err
 	}
@@ -1589,6 +1629,33 @@ func NewGetRandomTokenRequest(server string) (*http.Request, error) {
 	return req, nil
 }
 
+// NewGetStatusRequest generates requests for GetStatus
+func NewGetStatusRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/status")
+	if operationPath[0] == '/' {
+		operationPath = operationPath[1:]
+	}
+	operationURL := url.URL{
+		Path: operationPath,
+	}
+
+	queryURL := serverURL.ResolveReference(&operationURL)
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewDeleteUserByIDRequest generates requests for DeleteUserByID
 func NewDeleteUserByIDRequest(server string, userID string) (*http.Request, error) {
 	var err error
@@ -1896,6 +1963,9 @@ type ClientWithResponsesInterface interface {
 
 	// GetRandomToken request
 	GetRandomTokenWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetRandomTokenResponse, error)
+
+	// GetStatus request
+	GetStatusWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetStatusResponse, error)
 
 	// DeleteUserByID request
 	DeleteUserByIDWithResponse(ctx context.Context, userID string, reqEditors ...RequestEditorFn) (*DeleteUserByIDResponse, error)
@@ -2310,6 +2380,28 @@ func (r GetRandomTokenResponse) StatusCode() int {
 	return 0
 }
 
+type GetStatusResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *Status
+}
+
+// Status returns HTTPResponse.Status
+func (r GetStatusResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetStatusResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type DeleteUserByIDResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -2610,6 +2702,15 @@ func (c *ClientWithResponses) GetRandomTokenWithResponse(ctx context.Context, re
 		return nil, err
 	}
 	return ParseGetRandomTokenResponse(rsp)
+}
+
+// GetStatusWithResponse request returning *GetStatusResponse
+func (c *ClientWithResponses) GetStatusWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetStatusResponse, error) {
+	rsp, err := c.GetStatus(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetStatusResponse(rsp)
 }
 
 // DeleteUserByIDWithResponse request returning *DeleteUserByIDResponse
@@ -3110,6 +3211,32 @@ func ParseGetRandomTokenResponse(rsp *http.Response) (*GetRandomTokenResponse, e
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest RandomToken
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetStatusResponse parses an HTTP response from a GetStatusWithResponse call
+func ParseGetStatusResponse(rsp *http.Response) (*GetStatusResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetStatusResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest Status
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
