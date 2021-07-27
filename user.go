@@ -32,8 +32,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
-	"strings"
 
 	"github.com/zerotier/go-ztcentral/pkg/spec"
 )
@@ -75,19 +73,16 @@ func (c *Client) DeleteAPIToken(ctx context.Context, userID, name string) error 
 
 // RandomToken fetches an API-compatible token that can be fed to CreateAPIToken.
 func (c *Client) RandomToken(ctx context.Context) (string, error) {
+	res := spec.RandomToken{}
+
 	resp, err := c.specClient.GetRandomToken(ctx)
 	if err != nil {
 		return "", err
 	}
 
-	if resp.StatusCode != 200 {
-		return "", fmt.Errorf("Response was not 200; was %d", resp.StatusCode)
-	}
-
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
+	if err := c.decode(resp, &res); err != nil {
 		return "", err
 	}
 
-	return strings.TrimSpace(string(body)), nil
+	return *res.Token, nil
 }
