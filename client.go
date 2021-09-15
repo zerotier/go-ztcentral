@@ -39,7 +39,7 @@ import (
 	"github.com/zerotier/go-ztcentral/pkg/spec"
 )
 
-const (
+var (
 	// BaseURLV1 is the URL to ZeroTier Central
 	BaseURLV1 = "https://my.zerotier.com/api"
 )
