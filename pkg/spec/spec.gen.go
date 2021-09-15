@@ -54,6 +54,16 @@ type AuthMethods struct {
 	Oidc *string `json:"oidc"`
 }
 
+// DNS defines model for DNS.
+type DNS struct {
+
+	// Search domain to use for DNS records
+	Domain *string `json:"domain,omitempty"`
+
+	// IP address of unicast DNS service
+	Servers *[]string `json:"servers,omitempty"`
+}
+
 // IPRange defines model for IPRange.
 type IPRange struct {
 	IpRangeEnd   *string `json:"ipRangeEnd,omitempty"`
@@ -187,14 +197,7 @@ type NetworkConfig struct {
 
 	// Time the network was created
 	CreationTime *int64 `json:"creationTime,omitempty"`
-	Dns          *struct {
-
-		// Search domain to use for DNS records
-		Domain *string `json:"domain,omitempty"`
-
-		// IP address of unicast DNS service
-		Servers *[]string `json:"servers,omitempty"`
-	} `json:"dns,omitempty"`
+	Dns          *DNS   `json:"dns,omitempty"`
 
 	// Enable broadcast packets on the network
 	EnableBroadcast *bool `json:"enableBroadcast,omitempty"`
@@ -244,7 +247,7 @@ type Organization struct {
 type OrganizationInvitation struct {
 
 	// Creation time of the invite
-	CreationTime *int `json:"creation_time,omitempty"`
+	CreationTime *int64 `json:"creation_time,omitempty"`
 
 	// Email address of invitee
 	Email *string `json:"email,omitempty"`

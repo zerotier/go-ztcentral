@@ -1037,21 +1037,7 @@
           },
           "dns": {
             "type": "object",
-            "properties": {
-              "domain": {
-                "type": "string",
-                "example": "some.domain",
-                "description": "Search domain to use for DNS records"
-              },
-              "servers": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                },
-                "example": ["10.0.0.3"],
-                "description": "IP address of unicast DNS service"
-              }
-            }
+            "$ref": "#/components/schemas/DNS"
           },
           "enableBroadcast": {
             "type": "boolean",
@@ -1457,6 +1443,7 @@
           },
           "creation_time": {
             "type": "integer",
+            "format": "int64",
             "description": "Creation time of the invite",
             "example": 1613067920454,
             "readOnly": true
@@ -1535,6 +1522,24 @@
           "ipRangeEnd": {
             "type": "string",
             "example": "10.0.0.255"
+          }
+        }
+      },
+      "DNS": {
+        "type": "object",
+        "properties": {
+          "domain": {
+            "type": "string",
+            "example": "some.domain",
+            "description": "Search domain to use for DNS records"
+          },
+          "servers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": ["10.0.0.3"],
+            "description": "IP address of unicast DNS service"
           }
         }
       },
