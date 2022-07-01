@@ -95,7 +95,7 @@ func (c *Client) RoundTrip(req *http.Request) (*http.Response, error) {
 	req.Header.Set("User-Agent", c.userAgent)
 	req.Header.Set("Content-Type", "application/json; charset=utf-8")
 	req.Header.Set("Accept", "application/json; charset=utf-8")
-	req.Header.Set("Authorization", fmt.Sprintf("bearer %s", c.apiKey))
+	req.Header.Set("X-ZT1-AUTH", c.apiKey)
 
 	return http.DefaultClient.Do(req)
 }
