@@ -61,7 +61,7 @@ type DNS struct {
 	Domain *string `json:"domain,omitempty"`
 
 	// IP address of unicast DNS service
-	Servers *[]string `json:"servers,omitempty"`
+	Servers *[]string `json:"servers"`
 }
 
 // IPRange defines model for IPRange.
@@ -77,9 +77,9 @@ type IPV4AssignMode struct {
 
 // IPV6AssignMode defines model for IPV6AssignMode.
 type IPV6AssignMode struct {
-	N6plane *bool `json:"6plane,omitempty"`
-	Rfc4193 *bool `json:"rfc4193,omitempty"`
-	Zt      *bool `json:"zt,omitempty"`
+	N6plane *bool `json:"6plane"`
+	Rfc4193 *bool `json:"rfc4193"`
+	Zt      *bool `json:"zt"`
 }
 
 // InviteStatus defines model for InviteStatus.
@@ -89,140 +89,142 @@ type InviteStatus string
 type Member struct {
 
 	// ZeroTier version the member is running
-	ClientVersion *string       `json:"clientVersion,omitempty"`
-	Clock         *int64        `json:"clock,omitempty"`
+	ClientVersion *string       `json:"clientVersion"`
+	Clock         *int64        `json:"clock"`
 	Config        *MemberConfig `json:"config,omitempty"`
-	ControllerId  *string       `json:"controllerId,omitempty"`
+	ControllerId  *string       `json:"controllerId"`
 
 	// User defined description of the member
-	Description *string `json:"description,omitempty"`
+	Description *string `json:"description"`
 
 	// Whether or not the member is hidden in the UI
-	Hidden *bool `json:"hidden,omitempty"`
+	Hidden *bool `json:"hidden"`
 
 	// concatenation of network ID and member ID
-	Id *string `json:"id,omitempty"`
+	Id *string `json:"id"`
 
-	// Last seen time of the member
-	LastOnline *int64 `json:"lastOnline,omitempty"`
+	// Last seen time of the member.  Note: This data is considered ephemeral and may be reset to 0 at any time without warning.
+	LastOnline *int64 `json:"lastOnline"`
 
 	// User defined name of the member
-	Name      *string `json:"name,omitempty"`
-	NetworkId *string `json:"networkId,omitempty"`
+	Name      *string `json:"name"`
+	NetworkId *string `json:"networkId"`
 
 	// ZeroTier ID of the member
-	NodeId *string `json:"nodeId,omitempty"`
+	NodeId *string `json:"nodeId"`
 
-	// IP address the member last spoke to the controller via
-	PhysicalAddress *string `json:"physicalAddress,omitempty"`
+	// IP address the member last spoke to the controller via.  Note: This data is considered ephemeral and may be reset to 0 at any time without warning.
+	PhysicalAddress *string `json:"physicalAddress"`
 
 	// ZeroTier protocol version
-	ProtocolVersion *int `json:"protocolVersion,omitempty"`
+	ProtocolVersion *int `json:"protocolVersion"`
 
 	// Whether or not the client version is new enough to support the rules engine (1.4.0+)
-	SupportsRulesEngine *bool `json:"supportsRulesEngine,omitempty"`
+	SupportsRulesEngine *bool `json:"supportsRulesEngine"`
 }
 
 // MemberConfig defines model for MemberConfig.
 type MemberConfig struct {
 
 	// Allow the member to be a bridge on the network
-	ActiveBridge *bool `json:"activeBridge,omitempty"`
+	ActiveBridge *bool `json:"activeBridge"`
 
 	// Is the member authorized on the network
-	Authorized   *bool  `json:"authorized,omitempty"`
-	Capabilities *[]int `json:"capabilities,omitempty"`
+	Authorized   *bool  `json:"authorized"`
+	Capabilities *[]int `json:"capabilities"`
 
 	// Time the member was created or first tried to join the network
-	CreationTime *int64 `json:"creationTime,omitempty"`
+	CreationTime *int64 `json:"creationTime"`
 
 	// ID of the member node.  This is the 10 digit identifier that identifies a ZeroTier node.
-	Id *string `json:"id,omitempty"`
+	Id *string `json:"id"`
 
 	// Public Key of the member's Identity
-	Identity *string `json:"identity,omitempty"`
+	Identity *string `json:"identity"`
 
 	// List of assigned IP addresses
-	IpAssignments *[]string `json:"ipAssignments,omitempty"`
+	IpAssignments *[]string `json:"ipAssignments"`
 
 	// Time the member was authorized on the network
-	LastAuthorizedTime *int64 `json:"lastAuthorizedTime,omitempty"`
+	LastAuthorizedTime *int64 `json:"lastAuthorizedTime"`
 
 	// Time the member was deauthorized on the network
-	LastDeauthorizedTime *int64 `json:"lastDeauthorizedTime,omitempty"`
+	LastDeauthorizedTime *int64 `json:"lastDeauthorizedTime"`
 
 	// Exempt this member from the IP auto assignment pool on a Network
-	NoAutoAssignIps *bool `json:"noAutoAssignIps,omitempty"`
+	NoAutoAssignIps *bool `json:"noAutoAssignIps"`
 
 	// Member record revision count
-	Revision *int `json:"revision,omitempty"`
+	Revision *int `json:"revision"`
 
 	// Array of 2 member tuples of tag [ID, tag value]
-	Tags *[][]int `json:"tags,omitempty"`
+	Tags *[][]interface{} `json:"tags"`
 
 	// Major version of the client
-	VMajor *int `json:"vMajor,omitempty"`
+	VMajor *int `json:"vMajor"`
 
 	// Minor version of the client
-	VMinor *int `json:"vMinor,omitempty"`
+	VMinor *int `json:"vMinor"`
 
 	// Protocol version of the client
-	VProto *int `json:"vProto,omitempty"`
+	VProto *int `json:"vProto"`
 
 	// Revision number of the client
-	VRev *int `json:"vRev,omitempty"`
+	VRev *int `json:"vRev"`
 }
 
 // Network object
 type Network struct {
-	AuthorizedMemberCount *int                    `json:"authorizedMemberCount,omitempty"`
-	CapabilitiesByName    *map[string]interface{} `json:"capabilitiesByName,omitempty"`
-	Clock                 *int64                  `json:"clock,omitempty"`
+	AuthorizedMemberCount *int                    `json:"authorizedMemberCount"`
+	CapabilitiesByName    *map[string]interface{} `json:"capabilitiesByName"`
+	Clock                 *int64                  `json:"clock"`
 	Config                *NetworkConfig          `json:"config,omitempty"`
-	Description           *string                 `json:"description,omitempty"`
-	Id                    *string                 `json:"id,omitempty"`
-	OnlineMemberCount     *int                    `json:"onlineMemberCount,omitempty"`
-	OwnerId               *string                 `json:"ownerId,omitempty"`
-	Permissions           *PermissionsMap         `json:"permissions,omitempty"`
-	RulesSource           *string                 `json:"rulesSource,omitempty"`
-	TagsByName            *map[string]interface{} `json:"tagsByName,omitempty"`
-	TotalMemberCount      *int                    `json:"totalMemberCount,omitempty"`
+	Description           *string                 `json:"description"`
+	Id                    *string                 `json:"id"`
+
+	// Note: May be 0 on endpoints returning lists of Networks
+	OnlineMemberCount *int                    `json:"onlineMemberCount"`
+	OwnerId           *string                 `json:"ownerId"`
+	Permissions       *PermissionsMap         `json:"permissions,omitempty"`
+	RulesSource       *string                 `json:"rulesSource"`
+	TagsByName        *map[string]interface{} `json:"tagsByName"`
+	TotalMemberCount  *int                    `json:"totalMemberCount"`
 }
 
 // NetworkConfig defines model for NetworkConfig.
 type NetworkConfig struct {
 
 	// Array of network capabilities
-	Capabilities *[]map[string]interface{} `json:"capabilities,omitempty"`
+	Capabilities *[]map[string]interface{} `json:"capabilities"`
 
 	// Time the network was created
-	CreationTime *int64 `json:"creationTime,omitempty"`
+	CreationTime *int64 `json:"creationTime"`
 	Dns          *DNS   `json:"dns,omitempty"`
 
 	// Enable broadcast packets on the network
-	EnableBroadcast *bool `json:"enableBroadcast,omitempty"`
+	EnableBroadcast *bool `json:"enableBroadcast"`
 
 	// Network ID
-	Id *string `json:"id,omitempty"`
+	Id *string `json:"id"`
 
 	// Range of IP addresses for the auto assign pool
-	IpAssignmentPools *[]IPRange `json:"ipAssignmentPools,omitempty"`
+	IpAssignmentPools *[]IPRange `json:"ipAssignmentPools"`
 
 	// Time the network was last modified
-	LastModified *int64 `json:"lastModified,omitempty"`
+	LastModified *int64 `json:"lastModified"`
 
 	// MTU to set on the client virtual network adapter
-	Mtu *int `json:"mtu,omitempty"`
+	Mtu *int `json:"mtu"`
 
 	// Maximum number of recipients per multicast or broadcast. Warning - Setting this to 0 will disable IPv4 communication on your network!
-	MulticastLimit *int    `json:"multicastLimit,omitempty"`
-	Name           *string `json:"name,omitempty"`
+	MulticastLimit *int    `json:"multicastLimit"`
+	Name           *string `json:"name"`
 
 	// Whether or not the network is private.  If false, members will *NOT* need to be authorized to join.
-	Private      *bool                     `json:"private,omitempty"`
-	Routes       *[]Route                  `json:"routes,omitempty"`
-	Rules        *[]map[string]interface{} `json:"rules,omitempty"`
-	Tags         *[]map[string]interface{} `json:"tags,omitempty"`
+	Private      *bool                     `json:"private"`
+	Routes       *[]Route                  `json:"routes"`
+	Rules        *[]map[string]interface{} `json:"rules"`
+	Tags         *[]map[string]interface{} `json:"tags"`
 	V4AssignMode *IPV4AssignMode           `json:"v4AssignMode,omitempty"`
 	V6AssignMode *IPV6AssignMode           `json:"v6AssignMode,omitempty"`
 }

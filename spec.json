@@ -1,7 +1,7 @@
 {
   "openapi": "3.0.0",
   "info": {
-    "description": "ZeroTier Central Network Management Portal API.<p>All API requests must have an API token header specified in the <code>Authorization: Bearer xxxxx</code> format.  You can generate your API key by logging into <a href=\"https://my.zerotier.com\">ZeroTier Central</a> and creating a token on the Account page.</p><p>eg. <code>curl -X GET -H \"Authorization: bearer xxxxx\" https://my.zerotier.com/api/v1/network</code></p>",
+    "description": "ZeroTier Central Network Management Portal API.<p>All API requests must have an API token header specified in the <code>Authorization: token xxxxx</code> format.  You can generate your API key by logging into <a href=\"https://my.zerotier.com\">ZeroTier Central</a> and creating a token on the Account page.</p><p>eg. <code>curl -X GET -H \"Authorization: token xxxxx\" https://api.zerotier.com/api/v1/network</code></p><p><h3>Rate Limiting</h3></p><p>The ZeroTier Central API implements rate limiting.  Paid users are limited to 100 requests per second.  Free users are limited to 20 requests per second.</p> <p> You can get the OpenAPI spec here as well: <code>https://docs.zerotier.com/openapi/centralv1.json</code></p>",
     "version": "v1",
     "title": "ZeroTier Central API",
     "contact": {
@@ -15,7 +15,7 @@
   },
   "servers": [
     {
-      "url": "https://my.zerotier.com/api/v1",
+      "url": "https://api.zerotier.com/api/v1",
       "description": "Production Server"
     }
   ],
@@ -936,9 +936,9 @@
   },
   "components": {
     "securitySchemes": {
-      "bearerAuth": {
+      "tokenAuth": {
         "type": "http",
-        "scheme": "bearer"
+        "scheme": "token"
       }
     },
     "responses": {
@@ -962,52 +962,65 @@
           "id": {
             "type": "string",
             "example": "8056c2e21c000001",
-            "readOnly": true
+            "readOnly": true,
+            "nullable": true
           },
           "clock": {
             "type": "integer",
             "format": "int64",
             "example": 12345,
-            "readOnly": true
+            "readOnly": true,
+            "nullable": true
           },
           "config": {
-            "$ref": "#/components/schemas/NetworkConfig"
+            "$ref": "#/components/schemas/NetworkConfig",
+            "nullable": true
           },
           "description": {
             "type": "string",
-            "example": "Some descriptive text about my network."
+            "example": "Some descriptive text about my network.",
+            "nullable": true
           },
           "rulesSource": {
             "type": "string",
-            "example": "accept;"
+            "example": "accept;",
+            "nullable": true
           },
           "permissions": {
-            "$ref": "#/components/schemas/PermissionsMap"
+            "$ref": "#/components/schemas/PermissionsMap",
+            "nullable": true
           },
           "ownerId": {
             "type": "string",
-            "example": "00000000-0000-0000-0000-000000000000"
+            "example": "00000000-0000-0000-0000-000000000000",
+            "nullable": true
           },
           "onlineMemberCount": {
             "type": "integer",
             "example": 123,
-            "readOnly": true
+            "readOnly": true,
+            "nullable": true,
+            "description": "Note: May be 0 on endpoints returning lists of Networks"
           },
           "authorizedMemberCount": {
             "type": "integer",
             "example": 200,
-            "readOnly": true
+            "readOnly": true,
+            "nullable": true
           },
           "totalMemberCount": {
             "type": "integer",
             "example": 250,
-            "readOnly": true
+            "readOnly": true,
+            "nullable": true
           },
           "capabilitiesByName": {
-            "type": "object"
+            "type": "object",
+            "nullable": true
           },
           "tagsByName": {
-            "type": "object"
+            "type": "object",
+            "nullable": true
           }
         },
         "description": "Network object"
@@ -1019,87 +1032,103 @@
             "type": "string",
             "example": "8056c2e21c000001",
             "description": "Network ID",
-            "readOnly": true
+            "readOnly": true,
+            "nullable": true
           },
           "creationTime": {
             "type": "integer",
             "format": "int64",
             "example": 1442292672978,
             "description": "Time the network was created",
-            "readOnly": true
+            "readOnly": true,
+            "nullable": true
           },
           "capabilities": {
             "type": "array",
             "description": "Array of network capabilities",
             "items": {
               "type": "object"
-            }
+            },
+            "nullable": true
           },
           "dns": {
             "type": "object",
-            "$ref": "#/components/schemas/DNS"
+            "$ref": "#/components/schemas/DNS",
+            "nullable": true
           },
           "enableBroadcast": {
             "type": "boolean",
             "example": true,
-            "description": "Enable broadcast packets on the network"
+            "description": "Enable broadcast packets on the network",
+            "nullable": true
           },
           "ipAssignmentPools": {
             "type": "array",
             "description": "Range of IP addresses for the auto assign pool",
             "items": {
               "$ref": "#/components/schemas/IPRange"
-            }
+            },
+            "nullable": true
           },
           "lastModified": {
             "type": "integer",
             "format": "int64",
             "example": 1588184318235,
             "description": "Time the network was last modified",
-            "readOnly": true
+            "readOnly": true,
+            "nullable": true
           },
           "mtu": {
             "type": "integer",
             "example": 2800,
-            "description": "MTU to set on the client virtual network adapter"
+            "description": "MTU to set on the client virtual network adapter",
+            "nullable": true
           },
           "multicastLimit": {
             "type": "integer",
             "example": 32,
-            "description": "Maximum number of recipients per multicast or broadcast. Warning - Setting this to 0 will disable IPv4 communication on your network!"
+            "description": "Maximum number of recipients per multicast or broadcast. Warning - Setting this to 0 will disable IPv4 communication on your network!",
+            "nullable": true
           },
           "name": {
             "type": "string",
-            "example": "My ZeroTier Network"
+            "example": "My ZeroTier Network",
+            "nullable": true
           },
           "private": {
             "type": "boolean",
             "example": true,
-            "description": "Whether or not the network is private.  If false, members will *NOT* need to be authorized to join."
+            "description": "Whether or not the network is private.  If false, members will *NOT* need to be authorized to join.",
+            "nullable": true
           },
           "routes": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/Route"
-            }
+            },
+            "nullable": true
           },
           "rules": {
             "type": "array",
             "items": {
               "type": "object"
-            }
+            },
+            "nullable": true
           },
           "tags": {
             "type": "array",
             "items": {
               "type": "object"
-            }
+            },
+            "nullable": true
           },
           "v4AssignMode": {
-            "$ref": "#/components/schemas/IPV4AssignMode"
+            "$ref": "#/components/schemas/IPV4AssignMode",
+            "nullable": true
           },
           "v6AssignMode": {
-            "$ref": "#/components/schemas/IPV6AssignMode"
+            "$ref": "#/components/schemas/IPV6AssignMode",
+            "nullable": true
           }
         }
       },
@@ -1111,80 +1140,94 @@
             "example": "8056c2e21c000001-abcdef0123",
             "description": "concatenation of network ID and member ID",
             "readOnly": true,
-            "deprecated": true
+            "deprecated": true,
+            "nullable": true
           },
           "clock": {
             "type": "integer",
             "format": "int64",
             "example": 1612993759070,
-            "readOnly": true
+            "readOnly": true,
+            "nullable": true
           },
           "networkId": {
             "type": "string",
             "example": "8056c2e21c000001",
-            "readOnly": true
+            "readOnly": true,
+            "nullable": true
           },
           "nodeId": {
             "type": "string",
             "example": "abcdef01234",
             "description": "ZeroTier ID of the member",
-            "readOnly": true
+            "readOnly": true,
+            "nullable": true
           },
           "controllerId": {
             "type": "string",
             "example": "8056c2e21c",
             "readOnly": true,
-            "deprecated": true
+            "deprecated": true,
+            "nullable": true
           },
           "hidden": {
             "type": "boolean",
             "example": false,
-            "description": "Whether or not the member is hidden in the UI"
+            "description": "Whether or not the member is hidden in the UI",
+            "nullable": true
           },
           "name": {
             "type": "string",
             "example": "my-cray-supercomputer",
             "readOnly": false,
-            "description": "User defined name of the member"
+            "description": "User defined name of the member",
+            "nullable": true
           },
           "description": {
             "type": "string",
             "example": "My super awesome cray that I got ZeroTier to run on",
             "readOnly": false,
-            "description": "User defined description of the member"
+            "description": "User defined description of the member",
+            "nullable": true
           },
           "config": {
-            "$ref": "#/components/schemas/MemberConfig"
+            "$ref": "#/components/schemas/MemberConfig",
+            "nullable": true
           },
           "lastOnline": {
             "type": "integer",
             "format": "int64",
             "readOnly": true,
-            "description": "Last seen time of the member",
-            "example": 1612993673254
+            "description": "Last seen time of the member.  Note: This data is considered ephemeral and may be reset to 0 at any time without warning.",
+            "example": 1612993673254,
+            "nullable": true
           },
           "physicalAddress": {
             "type": "string",
             "readOnly": true,
-            "description": "IP address the member last spoke to the controller via",
-            "example": "8.8.8.8"
+            "description": "IP address the member last spoke to the controller via.  Note: This data is considered ephemeral and may be reset to 0 at any time without warning.",
+            "example": "8.8.8.8",
+            "nullable": true
           },
           "clientVersion": {
             "type": "string",
             "readOnly": true,
             "description": "ZeroTier version the member is running",
-            "example": "1.6.3"
+            "example": "1.6.3",
+            "nullable": true
           },
           "protocolVersion": {
             "type": "integer",
             "readOnly": true,
             "description": "ZeroTier protocol version",
-            "example": 12
+            "example": 12,
+            "nullable": true
           },
           "supportsRulesEngine": {
             "type": "boolean",
             "readOnly": true,
-            "description": "Whether or not the client version is new enough to support the rules engine (1.4.0+)"
+            "description": "Whether or not the client version is new enough to support the rules engine (1.4.0+)",
+            "nullable": true
           }
         }
       },
@@ -1195,38 +1238,44 @@
             "type": "boolean",
             "readOnly": false,
             "description": "Allow the member to be a bridge on the network",
-            "example": false
+            "example": false,
+            "nullable": true
           },
           "authorized": {
             "type": "boolean",
             "readOnly": false,
             "description": "Is the member authorized on the network",
-            "example": true
+            "example": true,
+            "nullable": true
           },
           "capabilities": {
             "type": "array",
             "items": {
               "type": "integer"
-            }
+            },
+            "nullable": true
           },
           "creationTime": {
             "type": "integer",
             "format": "int64",
             "readOnly": true,
             "description": "Time the member was created or first tried to join the network",
-            "example": 1599853509872
+            "example": 1599853509872,
+            "nullable": true
           },
           "id": {
             "type": "string",
             "readOnly": true,
             "description": "ID of the member node.  This is the 10 digit identifier that identifies a ZeroTier node.",
-            "example": "abcdef01234"
+            "example": "abcdef01234",
+            "nullable": true
           },
           "identity": {
             "type": "string",
             "readOnly": true,
             "description": "Public Key of the member's Identity",
-            "example": "abcdef0123:0:abcdef0123abcdef0123abcdef0123abcdef0123abcdef0123abcdef0123abcdef0123"
+            "example": "abcdef0123:0:abcdef0123abcdef0123abcdef0123abcdef0123abcdef0123abcdef0123abcdef0123",
+            "nullable": true
           },
           "ipAssignments": {
             "type": "array",
@@ -1235,42 +1284,48 @@
             "items": {
               "type": "string"
             },
-            "example": ["10.0.0.3"]
+            "example": ["10.0.0.3"],
+            "nullable": true
           },
           "lastAuthorizedTime": {
             "type": "integer",
             "format": "int64",
             "readOnly": true,
             "description": "Time the member was authorized on the network",
-            "example": 1599853637989
+            "example": 1599853637989,
+            "nullable": true
           },
           "lastDeauthorizedTime": {
             "type": "integer",
             "format": "int64",
             "readOnly": true,
             "description": "Time the member was deauthorized on the network",
-            "example": 0
+            "example": 0,
+            "nullable": true
           },
           "noAutoAssignIps": {
             "type": "boolean",
             "readOnly": false,
             "description": "Exempt this member from the IP auto assignment pool on a Network",
-            "example": false
+            "example": false,
+            "nullable": true
           },
           "revision": {
             "type": "integer",
             "readOnly": true,
             "description": "Member record revision count",
-            "example": 123
+            "example": 123,
+            "nullable": true
           },
           "tags": {
             "type": "array",
             "items": {
               "type": "array",
               "items": {
-                "type": "integer"
+                "anyOf": [{ "type": "integer" }, { "type": "boolean" }]
               }
             },
+            "nullable": true,
             "readOnly": false,
             "description": "Array of 2 member tuples of tag [ID, tag value]",
             "example": [[123, 456]]
@@ -1279,25 +1334,29 @@
             "type": "integer",
             "readOnly": true,
             "description": "Major version of the client",
-            "example": 1
+            "example": 1,
+            "nullable": true
           },
           "vMinor": {
             "type": "integer",
             "readOnly": true,
             "description": "Minor version of the client",
-            "example": 6
+            "example": 6,
+            "nullable": true
           },
           "vRev": {
             "type": "integer",
             "readOnly": true,
             "description": "Revision number of the client",
-            "example": 3
+            "example": 3,
+            "nullable": true
           },
           "vProto": {
             "type": "integer",
             "readOnly": true,
             "description": "Protocol version of the client",
-            "example": 12
+            "example": 12,
+            "nullable": true
           }
         }
       },
@@ -1539,7 +1598,8 @@
               "type": "string"
             },
             "example": ["10.0.0.3"],
-            "description": "IP address of unicast DNS service"
+            "description": "IP address of unicast DNS service",
+            "nullable": true
           }
         }
       },
@@ -1571,15 +1631,18 @@
         "properties": {
           "6plane": {
             "type": "boolean",
-            "example": true
+            "example": true,
+            "nullable": true
           },
           "rfc4193": {
             "type": "boolean",
-            "example": false
+            "example": false,
+            "nullable": true
           },
           "zt": {
             "type": "boolean",
-            "example": false
+            "example": false,
+            "nullable": true
           }
         }
       },
