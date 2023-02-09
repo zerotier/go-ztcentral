@@ -61,7 +61,7 @@ var ErrStatus = errors.New("status code was not 200")
 // NewClient creates a client.
 // key is an API key for your ZeroTier Central that you can generate after login.
 // It returns a fully initialized client.
-func NewClient(key string) (*Client, error) {
+func NewClient(url,  key string) (*Client, error) {
 	c := &Client{
 		apiKey:    key,
 		userAgent: userAgent,
@@ -70,7 +70,7 @@ func NewClient(key string) (*Client, error) {
 	c.httpClient = &http.Client{Transport: c}
 
 	var err error
-	c.specClient, err = spec.NewClient(BaseURLV1, spec.WithHTTPClient(c.httpClient))
+	c.specClient, err = spec.NewClient(url, spec.WithHTTPClient(c.httpClient))
 	if err != nil {
 		return nil, err
 	}
@@ -95,7 +95,7 @@ func (c *Client) RoundTrip(req *http.Request) (*http.Response, error) {
 	req.Header.Set("User-Agent", c.userAgent)
 	req.Header.Set("Content-Type", "application/json; charset=utf-8")
 	req.Header.Set("Accept", "application/json; charset=utf-8")
-	req.Header.Set("Authorization", fmt.Sprintf("bearer %s", c.apiKey))
+	req.Header.Set("X-ZT1-AUTH", c.apiKey)
 
 	return http.DefaultClient.Do(req)
 }
