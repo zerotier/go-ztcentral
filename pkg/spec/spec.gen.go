@@ -242,7 +242,8 @@ type Organization struct {
 	OwnerEmail *string `json:"ownerEmail,omitempty"`
 
 	// User ID of the organization owner
-	OwnerId *string `json:"ownerId,omitempty"`
+	OwnerId   *string    `json:"ownerId,omitempty"`
+	SsoConfig *SsoConfig `json:"ssoConfig,omitempty"`
 }
 
 // OrganizationInvitation defines model for OrganizationInvitation.
@@ -327,6 +328,19 @@ type RandomToken struct {
 type Route struct {
 	Target *string `json:"target,omitempty"`
 	Via    *string `json:"via"`
+}
+
+// SsoConfig defines model for SsoConfig.
+type SsoConfig struct {
+
+	// OIDC Client ID
+	ClientId *string `json:"clientId,omitempty"`
+
+	// Enabled flag for SSO
+	Enabled *bool `json:"enabled,omitempty"`
+
+	// OIDC Issuer URL
+	Issuer *string `json:"issuer,omitempty"`
 }
 
 // Status defines model for Status.

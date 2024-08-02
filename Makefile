@@ -1,8 +1,11 @@
-GOLANGCI_LINT_VERSION := 1.34.1
+GOLANGCI_LINT_VERSION := 1.59.1
 VERSIONFILE=VERSION
 
-lint: bin/golangci-lint
-	bin/golangci-lint run -v
+lint: docker-pull
+	docker run --rm -v $(CURDIR):/app -v /tmp/.cache/golangci-lint/v1.59.1:/root/.cache -w /app golangci/golangci-lint:v1.59.1 golangci-lint run -v
+
+docker-pull:
+	docker pull golangci/golangci-lint:v${GOLANGCI_LINT_VERSION}
 
 reflex-lint: bin/reflex
 	bin/reflex -r '\.go$$' make lint
@@ -10,12 +13,8 @@ reflex-lint: bin/reflex
 reflex-test: bin/reflex
 	bin/reflex -r '\.go$$' -- go test -v ./...
 
-bin/golangci-lint:
-	mkdir -p bin
-	wget -O- https://github.com/golangci/golangci-lint/releases/download/v$(GOLANGCI_LINT_VERSION)/golangci-lint-$(GOLANGCI_LINT_VERSION)-linux-amd64.tar.gz | tar vxz --strip-components=1 -C bin golangci-lint-$(GOLANGCI_LINT_VERSION)-linux-amd64/golangci-lint
-
 bin/reflex:
-	GO111MODULE=off GOBIN=${PWD}/bin go get -u github.com/cespare/reflex
+	GOBIN=${PWD}/bin go get -u github.com/cespare/reflex
 
 generate:
 	go generate -v ./...

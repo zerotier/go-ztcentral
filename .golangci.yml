@@ -1,20 +1,16 @@
 linters:
   enable:
-    - golint
+    - revive
     - goimports
-    - scopelint
+    - exportloopref
     - gocyclo
     - gosimple
     - govet
     - ineffassign
     - staticcheck
-    - structcheck
     - typecheck
-    - varcheck
     - bodyclose
-    - golint
     - misspell
-    - deadcode
     - unused
   disable:
     - errcheck
