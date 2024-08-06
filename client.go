@@ -35,6 +35,8 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
+	"time"
 
 	"github.com/zerotier/go-ztcentral/pkg/spec"
 )
@@ -53,6 +55,41 @@ type Client struct {
 
 	apiKey    string
 	userAgent string
+	limits    RateLimitHeaders
+}
+
+type RateLimitHeaders struct {
+	Limit     int       `json:"x-ratelimit-limit"`
+	Remaining int       `json:"x-ratelimit-remaining"`
+	ResetTime ResetTime `json:"x-ratelimit-reset"`
+}
+
+type ResetTime string
+
+func (r ResetTime) String() string {
+	return string(r)
+}
+
+func (r ResetTime) Time() time.Time {
+	d, _ := time.ParseDuration(string(r))
+	return time.Now().Add(d)
+}
+
+func newRateLimitHeaders(h http.Header) RateLimitHeaders {
+	// Central Sends Headers:
+	// X-Ratelimit-Limit: 20
+	// X-Ratelimit-Remaining: 14
+	// X-Ratelimit-Reset: Tue, 06 Aug 2024 20:53:48 UTC
+
+	limitReq, _ := strconv.Atoi(h.Get("x-ratelimit-limit"))
+	remainingReq, _ := strconv.Atoi(h.Get("x-ratelimit-remaining"))
+	resetTime := ResetTime(h.Get("x-ratelimit-reset"))
+
+	return RateLimitHeaders{
+		Limit:     limitReq,
+		Remaining: remainingReq,
+		ResetTime: resetTime,
+	}
 }
 
 // ErrStatus is returned when the response code is not 200.
@@ -97,7 +134,18 @@ func (c *Client) RoundTrip(req *http.Request) (*http.Response, error) {
 	req.Header.Set("Accept", "application/json; charset=utf-8")
 	req.Header.Set("Authorization", fmt.Sprintf("bearer %s", c.apiKey))
 
-	return http.DefaultClient.Do(req)
+	if c.limits.Limit != 0 && c.limits.Remaining < c.limits.Limit {
+		diff := time.Now().Add(time.Duration(c.limits.Limit-c.limits.Remaining) * 10 * time.Millisecond).Sub(time.Now())
+		time.Sleep(diff)
+	}
+
+	resp, err := http.DefaultTransport.RoundTrip(req)
+
+	a := newRateLimitHeaders(resp.Header)
+
+	c.limits = a
+
+	return resp, err
 }
 
 func (c *Client) decode(resp *http.Response, i interface{}) error {
