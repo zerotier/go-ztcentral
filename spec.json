@@ -1447,6 +1447,31 @@
               "$ref": "#/components/schemas/OrganizationMember"
             },
             "description": "List of organization members"
+          },
+          "ssoConfig": {
+            "type": "object",
+            "$ref": "#/components/schemas/SsoConfig",
+            "description": "Organization wide SSO configuration"
+          }
+        }
+      },
+      "SsoConfig": {
+        "type": "object",
+        "properties": {
+          "clientId": {
+            "type": "string",
+            "example": "oidc-client-id",
+            "description": "OIDC Client ID"
+          },
+          "issuer": {
+            "type": "string",
+            "example": "https://example.com/oidc/auth",
+            "description": "OIDC Issuer URL"
+          },
+          "enabled": {
+            "type": "boolean",
+            "example": true,
+            "description": "Enabled flag for SSO"
           }
         }
       },

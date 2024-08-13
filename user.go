@@ -46,9 +46,12 @@ func (c *Client) CreateAPIToken(ctx context.Context, userID, name, token string)
 		Token:     &token,
 		TokenName: &name,
 	})
+
 	if err != nil {
 		return err
 	}
+
+	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
 		return fmt.Errorf("Response was not 200; was %d", resp.StatusCode)
@@ -63,6 +66,8 @@ func (c *Client) DeleteAPIToken(ctx context.Context, userID, name string) error 
 	if err != nil {
 		return err
 	}
+
+	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
 		return fmt.Errorf("Response was not 200; was %d", resp.StatusCode)

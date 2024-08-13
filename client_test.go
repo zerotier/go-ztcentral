@@ -41,7 +41,7 @@ func TestUser(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if user.Id == nil || len(*user.Id) == 0 {
+	if user == nil || user.Id == nil || len(*user.Id) == 0 {
 		t.Fatal("UserID was nil or empty")
 	}
 }
