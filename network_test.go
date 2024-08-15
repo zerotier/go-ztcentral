@@ -37,6 +37,14 @@ import (
 	"github.com/zerotier/go-ztcentral/pkg/testutil"
 )
 
+func stringSlicePtr(ss ...string) *[]string {
+	return &ss
+}
+
+func intp(i int) *int {
+	return &i
+}
+
 func TestNetworkCRUD(t *testing.T) {
 	testutil.NeedsToken(t)
 
@@ -122,6 +130,7 @@ func TestNewNetworkWithNetworkConfig(t *testing.T) {
 	net, err = c.NewNetwork(ctx, "real", &spec.Network{
 		RulesSource: stringp("drop;"),
 		Config: &spec.NetworkConfig{
+			Private: &[]bool{true}[0],
 			IpAssignmentPools: &[]spec.IPRange{
 				{
 					IpRangeStart: stringp("10.0.0.2"),
@@ -134,6 +143,13 @@ func TestNewNetworkWithNetworkConfig(t *testing.T) {
 					Via:    stringp("10.0.0.1"),
 				},
 			},
+			Dns: &spec.DNS{
+				Domain:  stringp("test.com"),
+				Servers: stringSlicePtr("1.1.1.1", "9.9.9.9"),
+			},
+			Mtu:             intp(1000),
+			MulticastLimit:  intp(16),
+			EnableBroadcast: boolp(true),
 		}})
 	if err != nil {
 		t.Fatal(err)
@@ -235,6 +251,7 @@ func TestUpdateNetworks(t *testing.T) {
 			Routes: &[]spec.Route{
 				{
 					Target: stringp("10.9.8.0/24"),
+					Via:    stringp("10.0.0.1"),
 				},
 			},
 			IpAssignmentPools: &[]spec.IPRange{
@@ -243,6 +260,13 @@ func TestUpdateNetworks(t *testing.T) {
 					IpRangeEnd:   stringp("10.9.8.255"),
 				},
 			},
+			Dns: &spec.DNS{
+				Domain:  stringp("test.com"),
+				Servers: stringSlicePtr("1.1.1.1", "9.9.9.9"),
+			},
+			Mtu:             intp(1000),
+			MulticastLimit:  intp(16),
+			EnableBroadcast: boolp(true),
 		},
 	})
 	if err != nil {
