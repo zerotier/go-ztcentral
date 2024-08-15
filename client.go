@@ -135,7 +135,7 @@ func (c *Client) RoundTrip(req *http.Request) (*http.Response, error) {
 	req.Header.Set("Authorization", fmt.Sprintf("bearer %s", c.apiKey))
 
 	if c.limits.Limit != 0 && c.limits.Remaining < c.limits.Limit {
-		diff := time.Now().Add(time.Duration(c.limits.Limit-c.limits.Remaining) * 10 * time.Millisecond).Sub(time.Now())
+		diff := time.Until(time.Now().Add(time.Duration(c.limits.Limit-c.limits.Remaining) * 10 * time.Millisecond))
 		time.Sleep(diff)
 	}
 
