@@ -1,4 +1,4 @@
 package ztcentral
 
 // Version is the version of this library.
-const Version = "v0.5.3-72caa0fb9cb1f30f705ddb1890a021592f84bc35"
+const Version = "v0.5.3-b3f1de52fdf226d30b9cb7367577ec07d05a29d8"

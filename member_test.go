@@ -160,28 +160,28 @@ func TestCRUDMembers(t *testing.T) {
 				return nil
 			},
 		},
-		// "ssoexempt": {
-		// 	update: func(member *spec.Member) {
-		// 		member.Config.SsoExempt = boolp(true)
-		// 	},
-		// 	validate: func(member *spec.Member) error {
-		// 		if member.Config.SsoExempt == nil || !*member.Config.SsoExempt {
-		// 			return fmt.Errorf("Expected SsoExempt to be true, got: %+v", member.Config.SsoExempt)
-		// 		}
-		// 		return nil
-		// 	},
-		// },
-		// "ssoexempt_false": {
-		// 	update: func(member *spec.Member) {
-		// 		member.Config.SsoExempt = boolp(false)
-		// 	},
-		// 	validate: func(member *spec.Member) error {
-		// 		if member.Config.SsoExempt == nil || *member.Config.SsoExempt {
-		// 			return fmt.Errorf("Expected SsoExempt to be false, got: %+v", member.Config.SsoExempt)
-		// 		}
-		// 		return nil
-		// 	},
-		// },
+		"ssoexempt": {
+			update: func(member *spec.Member) {
+				member.Config.SsoExempt = boolp(true)
+			},
+			validate: func(member *spec.Member) error {
+				if member.Config.SsoExempt == nil || !*member.Config.SsoExempt {
+					return fmt.Errorf("Expected SsoExempt to be true, got: %+v", member.Config.SsoExempt)
+				}
+				return nil
+			},
+		},
+		"ssoexempt_false": {
+			update: func(member *spec.Member) {
+				member.Config.SsoExempt = boolp(false)
+			},
+			validate: func(member *spec.Member) error {
+				if member.Config.SsoExempt == nil || *member.Config.SsoExempt {
+					return fmt.Errorf("Expected SsoExempt to be false, got: %+v", member.Config.SsoExempt)
+				}
+				return nil
+			},
+		},
 	}
 
 	for _, member := range members {

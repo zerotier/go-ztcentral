@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	BearerAuthScopes = "bearerAuth.Scopes"
+	TokenAuthScopes = "tokenAuth.Scopes"
 )
 
 // Defines values for InviteStatus.
@@ -103,8 +103,11 @@ type Member struct {
 	// concatenation of network ID and member ID
 	Id *string `json:"id"`
 
-	// Last seen time of the member.  Note: This data is considered ephemeral and may be reset to 0 at any time without warning.
+	// Last seen time of the member (milliseconds since epoch).  Note: This data is considered ephemeral and may be reset to 0 at any time without warning.
 	LastOnline *int64 `json:"lastOnline"`
+
+	// Time the member last checked in with the network controller in milliseconds since epoch. Note: This data is considered ephemeral and may be reset to 0 at any time without warning.
+	LastSeen *int64 `json:"lastSeen"`
 
 	// User defined name of the member
 	Name      *string `json:"name"`
@@ -113,7 +116,7 @@ type Member struct {
 	// ZeroTier ID of the member
 	NodeId *string `json:"nodeId"`
 
-	// IP address the member last spoke to the controller via.  Note: This data is considered ephemeral and may be reset to 0 at any time without warning.
+	// IP address the member last spoke to the controller via (milliseconds since epoch).  Note: This data is considered ephemeral and may be reset to 0 at any time without warning.
 	PhysicalAddress *string `json:"physicalAddress"`
 
 	// ZeroTier protocol version
@@ -156,6 +159,9 @@ type MemberConfig struct {
 
 	// Member record revision count
 	Revision *int `json:"revision"`
+
+	// Allow the member to be authorized without OIDC/SSO
+	SsoExempt *bool `json:"ssoExempt"`
 
 	// Array of 2 member tuples of tag [ID, tag value]
 	Tags *[][]interface{} `json:"tags"`
@@ -224,9 +230,43 @@ type NetworkConfig struct {
 	Private      *bool                     `json:"private"`
 	Routes       *[]Route                  `json:"routes"`
 	Rules        *[]map[string]interface{} `json:"rules"`
+	SsoConfig    *NetworkSSOConfig         `json:"ssoConfig,omitempty"`
 	Tags         *[]map[string]interface{} `json:"tags"`
 	V4AssignMode *IPV4AssignMode           `json:"v4AssignMode,omitempty"`
 	V6AssignMode *IPV6AssignMode           `json:"v6AssignMode,omitempty"`
+}
+
+// NetworkSSOConfig defines model for NetworkSSOConfig.
+type NetworkSSOConfig struct {
+
+	// List of email addresses or group memberships that may SSO auth onto the network
+	AllowList *[]string `json:"allowList"`
+
+	// Authorization URL endpoint
+	AuthorizationEndpoint *string `json:"authorizationEndpoint,omitempty"`
+
+	// SSO client ID.  Client ID must be already configured in the Org
+	ClientId *string `json:"clientId,omitempty"`
+
+	// SSO enabled/disabled on network
+	Enabled *bool `json:"enabled,omitempty"`
+
+	// URL of the OIDC issuer
+	Issuer *string `json:"issuer,omitempty"`
+
+	// SSO mode.  One of: `default`, `email`, `group`
+	Mode *string `json:"mode,omitempty"`
+
+	// Provider type
+	Provider *string `json:"provider,omitempty"`
+}
+
+// OrgSsoConfig defines model for OrgSsoConfig.
+type OrgSsoConfig struct {
+
+	// Enabled flag for SSO
+	Enabled *bool        `json:"enabled,omitempty"`
+	Issuers *[]SsoIssuer `json:"issuers,omitempty"`
 }
 
 // Organization defines model for Organization.
@@ -242,8 +282,8 @@ type Organization struct {
 	OwnerEmail *string `json:"ownerEmail,omitempty"`
 
 	// User ID of the organization owner
-	OwnerId   *string    `json:"ownerId,omitempty"`
-	SsoConfig *SsoConfig `json:"ssoConfig,omitempty"`
+	OwnerId   *string       `json:"ownerId,omitempty"`
+	SsoConfig *OrgSsoConfig `json:"ssoConfig,omitempty"`
 }
 
 // OrganizationInvitation defines model for OrganizationInvitation.
@@ -330,17 +370,20 @@ type Route struct {
 	Via    *string `json:"via"`
 }
 
-// SsoConfig defines model for SsoConfig.
-type SsoConfig struct {
+// SsoIssuer defines model for SsoIssuer.
+type SsoIssuer struct {
+
+	// authorization endpoint
+	AuthorizationEndpoint *string `json:"authorization_endpoint,omitempty"`
 
 	// OIDC Client ID
 	ClientId *string `json:"clientId,omitempty"`
 
-	// Enabled flag for SSO
-	Enabled *bool `json:"enabled,omitempty"`
-
 	// OIDC Issuer URL
 	Issuer *string `json:"issuer,omitempty"`
+
+	// OIDC Provider (one of: default, authelia, auth0, azure, keycloak, okta, onelogin)
+	Provider *string `json:"provider,omitempty"`
 }
 
 // Status defines model for Status.
