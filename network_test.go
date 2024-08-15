@@ -272,6 +272,7 @@ func TestUpdateNetworks(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	defer c.DeleteNetwork(ctx, *n.Config.Id)
 
 	n.Config.IpAssignmentPools = &[]spec.IPRange{
 		{
@@ -297,4 +298,5 @@ func TestUpdateNetworks(t *testing.T) {
 	if *(*n3.Config.IpAssignmentPools)[0].IpRangeEnd != "10.9.8.7" {
 		t.Fatal("configurations did not match")
 	}
+
 }
