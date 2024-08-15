@@ -1,7 +1,7 @@
 {
   "openapi": "3.0.0",
   "info": {
-    "description": "ZeroTier Central Network Management Portal API.<p>All API requests must have an API token header specified in the <code>Authorization: token xxxxx</code> format.  You can generate your API key by logging into <a href=\"https://my.zerotier.com\">ZeroTier Central</a> and creating a token on the Account page.</p><p>eg. <code>curl -X GET -H \"Authorization: token xxxxx\" https://api.zerotier.com/api/v1/network</code></p><p><h3>Rate Limiting</h3></p><p>The ZeroTier Central API implements rate limiting.  Paid users are limited to 100 requests per second.  Free users are limited to 20 requests per second.</p> <p> You can get the OpenAPI spec here as well: <code>https://docs.zerotier.com/openapi/centralv1.json</code></p>",
+    "description": "ZeroTier Central Network Management Portal API.<p>All API requests must have an API token header specified in the <code>Authorization: token xxxxx</code> format.  You can generate your API key by logging into <a href=\"https://my.zerotier.com\">ZeroTier Central</a> and creating a token on the Account page.</p><p>eg. <code>curl -X GET -H \"Authorization: token xxxxx\" https://api.zerotier.com/api/v1/network</code></p><p><h3>Rate Limiting</h3></p><p>The ZeroTier Central API implements rate limiting.  Paid users are limited to 100 requests per second.  Free users are limited to 20 requests per second.</p> <p> You can get the OpenAPI spec here as well: <code>https://docs.zerotier.com/api/central/ref-v1.json</code></p>",
     "version": "v1",
     "title": "ZeroTier Central API",
     "contact": {
@@ -1115,6 +1115,10 @@
             },
             "nullable": true
           },
+          "ssoConfig": {
+            "$ref": "#/components/schemas/NetworkSSOConfig",
+            "nullable": true
+          },
           "tags": {
             "type": "array",
             "items": {
@@ -1129,6 +1133,55 @@
           "v6AssignMode": {
             "$ref": "#/components/schemas/IPV6AssignMode",
             "nullable": true
+          }
+        }
+      },
+      "NetworkSSOConfig": {
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "example": true,
+            "readOnly": false,
+            "description": "SSO enabled/disabled on network"
+          },
+          "mode": {
+            "type": "string",
+            "example": "default",
+            "description": "SSO mode.  One of: `default`, `email`, `group`",
+            "readOnly": false
+          },
+          "clientId": {
+            "type": "string",
+            "example": "some-client-id",
+            "description": "SSO client ID.  Client ID must be already configured in the Org",
+            "readOnly": false
+          },
+          "issuer": {
+            "type": "string",
+            "example": "https://example.com/oidc",
+            "description": "URL of the OIDC issuer",
+            "readOnly": true
+          },
+          "provider": {
+            "type": "string",
+            "example": "keycloak",
+            "description": "Provider type",
+            "readOnly": true
+          },
+          "authorizationEndpoint": {
+            "type": "string",
+            "description": "Authorization URL endpoint",
+            "readOnly": true
+          },
+          "allowList": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true,
+            "description": "List of email addresses or group memberships that may SSO auth onto the network",
+            "readOnly": false
           }
         }
       },
@@ -1198,14 +1251,23 @@
             "type": "integer",
             "format": "int64",
             "readOnly": true,
-            "description": "Last seen time of the member.  Note: This data is considered ephemeral and may be reset to 0 at any time without warning.",
+            "description": "Last seen time of the member (milliseconds since epoch).  Note: This data is considered ephemeral and may be reset to 0 at any time without warning.",
+            "example": 1612993673254,
+            "nullable": true,
+            "deprecated": true
+          },
+          "lastSeen": {
+            "type": "integer",
+            "format": "int64",
+            "readOnly": true,
+            "description": "Time the member last checked in with the network controller in milliseconds since epoch. Note: This data is considered ephemeral and may be reset to 0 at any time without warning.",
             "example": 1612993673254,
             "nullable": true
           },
           "physicalAddress": {
             "type": "string",
             "readOnly": true,
-            "description": "IP address the member last spoke to the controller via.  Note: This data is considered ephemeral and may be reset to 0 at any time without warning.",
+            "description": "IP address the member last spoke to the controller via (milliseconds since epoch).  Note: This data is considered ephemeral and may be reset to 0 at any time without warning.",
             "example": "8.8.8.8",
             "nullable": true
           },
@@ -1315,6 +1377,13 @@
             "readOnly": true,
             "description": "Member record revision count",
             "example": 123,
+            "nullable": true
+          },
+          "ssoExempt": {
+            "type": "boolean",
+            "readOnly": false,
+            "description": "Allow the member to be authorized without OIDC/SSO",
+            "example": false,
             "nullable": true
           },
           "tags": {
@@ -1450,14 +1519,36 @@
           },
           "ssoConfig": {
             "type": "object",
-            "$ref": "#/components/schemas/SsoConfig",
+            "$ref": "#/components/schemas/OrgSsoConfig",
             "description": "Organization wide SSO configuration"
           }
         }
       },
-      "SsoConfig": {
+      "OrgSsoConfig": {
         "type": "object",
         "properties": {
+          "enabled": {
+            "type": "boolean",
+            "example": true,
+            "description": "Enabled flag for SSO"
+          },
+          "issuers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SsoIssuer",
+              "description": "list of configured OIDC issuers"
+            }
+          }
+        }
+      },
+      "SsoIssuer": {
+        "type": "object",
+        "properties": {
+          "provider": {
+            "type": "string",
+            "example": "keycloak",
+            "description": "OIDC Provider (one of: default, authelia, auth0, azure, keycloak, okta, onelogin)"
+          },
           "clientId": {
             "type": "string",
             "example": "oidc-client-id",
@@ -1468,10 +1559,11 @@
             "example": "https://example.com/oidc/auth",
             "description": "OIDC Issuer URL"
           },
-          "enabled": {
-            "type": "boolean",
-            "example": true,
-            "description": "Enabled flag for SSO"
+          "authorization_endpoint": {
+            "type": "string",
+            "example": "https://example.com/oidc/auth/endpoint",
+            "description": "authorization endpoint",
+            "readOnly": true
           }
         }
       },
@@ -1814,7 +1906,7 @@
   },
   "security": [
     {
-      "bearerAuth": []
+      "tokenAuth": []
     }
   ]
 }

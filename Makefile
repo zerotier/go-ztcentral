@@ -20,7 +20,7 @@ generate:
 	go generate -v ./...
 
 update-openapi:
-	curl -sSL https://raw.githubusercontent.com/zerotier/docs/master/static/openapi/centralv1.json >spec.json
+	curl -sSL https://raw.githubusercontent.com/zerotier/docs/main/static/openapi/centralv1.json >spec.json
 	go generate ./...
 
 release:
