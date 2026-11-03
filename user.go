@@ -31,7 +31,6 @@ package ztcentral
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"github.com/zerotier/go-ztcentral/pkg/spec"
 )
@@ -51,13 +50,7 @@ func (c *Client) CreateAPIToken(ctx context.Context, userID, name, token string)
 		return err
 	}
 
-	defer resp.Body.Close()
-
-	if resp.StatusCode != 200 {
-		return fmt.Errorf("Response was not 200; was %d", resp.StatusCode)
-	}
-
-	return nil
+	return checkStatus(resp)
 }
 
 // DeleteAPIToken removes an API token from the list of available tokens.
@@ -67,13 +60,7 @@ func (c *Client) DeleteAPIToken(ctx context.Context, userID, name string) error 
 		return err
 	}
 
-	defer resp.Body.Close()
-
-	if resp.StatusCode != 200 {
-		return fmt.Errorf("Response was not 200; was %d", resp.StatusCode)
-	}
-
-	return nil
+	return checkStatus(resp)
 }
 
 // RandomToken fetches an API-compatible token that can be fed to CreateAPIToken.

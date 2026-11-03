@@ -1,9 +1,9 @@
 {
   "openapi": "3.0.0",
   "info": {
-    "description": "ZeroTier Central Network Management Portal API.<p>All API requests must have an API token header specified in the <code>Authorization: token xxxxx</code> format.  You can generate your API key by logging into <a href=\"https://my.zerotier.com\">ZeroTier Central</a> and creating a token on the Account page.</p><p>eg. <code>curl -X GET -H \"Authorization: token xxxxx\" https://api.zerotier.com/api/v1/network</code></p><p><h3>Rate Limiting</h3></p><p>The ZeroTier Central API implements rate limiting.  Paid users are limited to 100 requests per second.  Free users are limited to 20 requests per second.</p> <p> You can get the OpenAPI spec here as well: <code>https://docs.zerotier.com/api/central/ref-v1.json</code></p>",
+    "description": "ZeroTier Central Network Management Portal API.<p>All API requests must have an API token header specified in the <code>Authorization: token xxxxx</code> format.  You can generate your API key by logging into <a href=\"https://my.zerotier.com\">ZeroTier Central</a> and creating a token on the Account page.</p><p>eg. <code>curl -X GET -H \"Authorization: token xxxxx\" https://api.zerotier.com/api/v1/network</code></p><p><h3>Rate Limiting</h3></p><p>The ZeroTier Central API implements rate limiting.  Paid users are limited to 100 requests per second.  Free users are limited to 20 requests per second.</p> <p> You can get the OpenAPI spec here as well: <code>https://docs.zerotier.com/openapi/central/v1.json</code></p>",
     "version": "v1",
-    "title": "ZeroTier Central API",
+    "title": "ZeroTier Legacy Central API",
     "contact": {
       "name": "ZeroTier Support Discussion Forum",
       "url": "https://discuss.zerotier.com"
@@ -44,7 +44,9 @@
   "paths": {
     "/status": {
       "get": {
-        "tags": ["util"],
+        "tags": [
+          "util"
+        ],
         "summary": "Obtain the overall status of the account tied to the API token in use.",
         "operationId": "getStatus",
         "responses": {
@@ -63,7 +65,9 @@
     },
     "/network": {
       "get": {
-        "tags": ["network"],
+        "tags": [
+          "network"
+        ],
         "summary": "Returns a list of Networks you have access to.",
         "operationId": "getNetworkList",
         "responses": {
@@ -86,7 +90,9 @@
         }
       },
       "post": {
-        "tags": ["network"],
+        "tags": [
+          "network"
+        ],
         "summary": "Create a new network.",
         "operationId": "newNetwork",
         "requestBody": {
@@ -119,7 +125,9 @@
     },
     "/network/{networkID}": {
       "get": {
-        "tags": ["network"],
+        "tags": [
+          "network"
+        ],
         "summary": "Get network by ID",
         "description": "Returns a single network",
         "operationId": "getNetworkByID",
@@ -157,7 +165,9 @@
         }
       },
       "post": {
-        "tags": ["network"],
+        "tags": [
+          "network"
+        ],
         "summary": "update network configuration",
         "operationId": "updateNetwork",
         "parameters": [
@@ -205,7 +215,9 @@
         }
       },
       "delete": {
-        "tags": ["network"],
+        "tags": [
+          "network"
+        ],
         "summary": "delete network",
         "operationId": "deleteNetwork",
         "parameters": [
@@ -237,7 +249,9 @@
     },
     "/network/{networkID}/member": {
       "get": {
-        "tags": ["network-member"],
+        "tags": [
+          "network-member"
+        ],
         "summary": "Returns a list of Members on the network.",
         "operationId": "getNetworkMemberList",
         "parameters": [
@@ -279,7 +293,9 @@
     },
     "/network/{networkID}/member/{memberID}": {
       "get": {
-        "tags": ["network-member"],
+        "tags": [
+          "network-member"
+        ],
         "operationId": "getNetworkMember",
         "summary": "Return an individual member on a network",
         "parameters": [
@@ -325,7 +341,9 @@
         }
       },
       "post": {
-        "tags": ["network-member"],
+        "tags": [
+          "network-member"
+        ],
         "operationId": "updateNetworkMember",
         "summary": "Modify a network member",
         "parameters": [
@@ -382,7 +400,9 @@
         }
       },
       "delete": {
-        "tags": ["network-member"],
+        "tags": [
+          "network-member"
+        ],
         "operationId": "deleteNetworkMember",
         "summary": "Delete a network member",
         "parameters": [
@@ -421,9 +441,64 @@
         }
       }
     },
+    "/network/{networkID}/users": {
+      "post": {
+        "tags": [
+          "network"
+        ],
+        "operationId": "setNetworkUserPermissions",
+        "summary": "Set user permissions on a network",
+        "description": "Assign or update permissions for a specific user on a network. Use this endpoint to grant read, authorize, modify, or delete permissions.",
+        "parameters": [
+          {
+            "name": "networkID",
+            "description": "ID of the network",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "User permissions object",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NetworkUserPermissions"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Permissions updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NetworkUserPermissions"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDeniedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
     "/user/{userID}": {
       "get": {
-        "tags": ["user"],
+        "tags": [
+          "user"
+        ],
         "operationId": "getUserByID",
         "summary": "Get user record",
         "parameters": [
@@ -460,7 +535,9 @@
         }
       },
       "post": {
-        "tags": ["user"],
+        "tags": [
+          "user"
+        ],
         "operationId": "updateUserByID",
         "summary": "Update user record (SMS number or Display Name only)",
         "parameters": [
@@ -508,7 +585,9 @@
         }
       },
       "delete": {
-        "tags": ["user"],
+        "tags": [
+          "user"
+        ],
         "operationId": "deleteUserByID",
         "summary": "Delete user",
         "description": "Deletes the user and all associated networks.  This is not reversible. Delete at your own risk.",
@@ -541,7 +620,9 @@
     },
     "/user/{userID}/token": {
       "post": {
-        "tags": ["user"],
+        "tags": [
+          "user"
+        ],
         "operationId": "addAPIToken",
         "summary": "Add an API token",
         "parameters": [
@@ -594,7 +675,9 @@
     },
     "/user/{userID}/token/{tokenName}": {
       "delete": {
-        "tags": ["user"],
+        "tags": [
+          "user"
+        ],
         "operationId": "deleteAPIToken",
         "summary": "Delete API Token",
         "parameters": [
@@ -635,7 +718,9 @@
     },
     "/org": {
       "get": {
-        "tags": ["organizations"],
+        "tags": [
+          "organizations"
+        ],
         "operationId": "getOrganization",
         "summary": "Get the current user's organization",
         "responses": {
@@ -663,7 +748,9 @@
     },
     "/org/{orgID}": {
       "get": {
-        "tags": ["organizations"],
+        "tags": [
+          "organizations"
+        ],
         "operationId": "getOrganizationByID",
         "summary": "Get organization by ID",
         "parameters": [
@@ -702,7 +789,9 @@
     },
     "/org/{orgID}/user": {
       "get": {
-        "tags": ["organizations"],
+        "tags": [
+          "organizations"
+        ],
         "operationId": "getOrganizationMembers",
         "summary": "Get list of organization members",
         "parameters": [
@@ -741,7 +830,9 @@
     },
     "/org-invitation": {
       "get": {
-        "tags": ["organizations"],
+        "tags": [
+          "organizations"
+        ],
         "operationId": "getOrganizationInvitationList",
         "summary": "Get list of organization invitations",
         "responses": {
@@ -770,7 +861,9 @@
         }
       },
       "post": {
-        "tags": ["organizations"],
+        "tags": [
+          "organizations"
+        ],
         "operationId": "inviteUserByEmail",
         "summary": "Invite a user to your organization by email",
         "requestBody": {
@@ -809,7 +902,9 @@
     },
     "/org-invitation/{inviteID}": {
       "get": {
-        "tags": ["organizations"],
+        "tags": [
+          "organizations"
+        ],
         "operationId": "getInvitationByID",
         "summary": "Get organization invitation",
         "parameters": [
@@ -846,7 +941,9 @@
         }
       },
       "post": {
-        "tags": ["organizations"],
+        "tags": [
+          "organizations"
+        ],
         "operationId": "acceptInvitation",
         "summary": "Accept organization invitation",
         "parameters": [
@@ -883,7 +980,9 @@
         }
       },
       "delete": {
-        "tags": ["organizations"],
+        "tags": [
+          "organizations"
+        ],
         "operationId": "declineInvitation",
         "summary": "Decline organization invitation",
         "parameters": [
@@ -915,7 +1014,9 @@
     },
     "/randomToken": {
       "get": {
-        "tags": ["util"],
+        "tags": [
+          "util"
+        ],
         "operationId": "getRandomToken",
         "summary": "Get a random 32 character token",
         "description": "Get a random 32 character.  Used by the web UI to generate API keys",
@@ -984,11 +1085,14 @@
           "rulesSource": {
             "type": "string",
             "example": "accept;",
-            "nullable": true
+            "nullable": true,
+            "description": "The flow rules source code in ZeroTier rule language. Set this field to update network rules."
           },
           "permissions": {
             "$ref": "#/components/schemas/PermissionsMap",
-            "nullable": true
+            "nullable": true,
+            "readOnly": true,
+            "description": "User permissions map. Read-only on this endpoint. Use POST /network/{networkID}/users to modify user permissions."
           },
           "ownerId": {
             "type": "string",
@@ -1021,6 +1125,12 @@
           "tagsByName": {
             "type": "object",
             "nullable": true
+          },
+          "migrationLocked": {
+            "type": "boolean",
+            "readOnly": true,
+            "nullable": true,
+            "description": "Network is locked for migration; writes return 423 until the lock is released"
           }
         },
         "description": "Network object"
@@ -1147,8 +1257,8 @@
           },
           "mode": {
             "type": "string",
-            "example": "default",
-            "description": "SSO mode.  One of: `default`, `email`, `group`",
+            "example": "standard",
+            "description": "SSO mode.  One of: `standard`, `email`, `group`",
             "readOnly": false
           },
           "clientId": {
@@ -1174,7 +1284,7 @@
             "description": "Authorization URL endpoint",
             "readOnly": true
           },
-          "allowList": {
+          "allowedList": {
             "type": "array",
             "items": {
               "type": "string"
@@ -1290,6 +1400,24 @@
             "readOnly": true,
             "description": "Whether or not the client version is new enough to support the rules engine (1.4.0+)",
             "nullable": true
+          },
+          "physicalLocation": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true,
+            "description": "Geographic location of the member's physical address, if known"
+          },
+          "arch": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true,
+            "description": "CPU architecture reported by the member"
+          },
+          "os": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true,
+            "description": "Operating system reported by the member"
           }
         }
       },
@@ -1346,7 +1474,9 @@
             "items": {
               "type": "string"
             },
-            "example": ["10.0.0.3"],
+            "example": [
+              "10.0.0.3"
+            ],
             "nullable": true
           },
           "lastAuthorizedTime": {
@@ -1391,13 +1521,25 @@
             "items": {
               "type": "array",
               "items": {
-                "anyOf": [{ "type": "integer" }, { "type": "boolean" }]
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "boolean"
+                  }
+                ]
               }
             },
             "nullable": true,
             "readOnly": false,
             "description": "Array of 2 member tuples of tag [ID, tag value]",
-            "example": [[123, 456]]
+            "example": [
+              [
+                123,
+                456
+              ]
+            ]
           },
           "vMajor": {
             "type": "integer",
@@ -1426,6 +1568,19 @@
             "description": "Protocol version of the client",
             "example": 12,
             "nullable": true
+          },
+          "authenticatedEmail": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true,
+            "description": "Email the member last authenticated with via SSO"
+          },
+          "authenticationExpiryTime": {
+            "type": "integer",
+            "readOnly": true,
+            "nullable": true,
+            "description": "Time the member's SSO authentication expires (milliseconds since epoch)",
+            "format": "int64"
           }
         }
       },
@@ -1485,7 +1640,9 @@
             "items": {
               "type": "string"
             },
-            "example": ["my-token-id"],
+            "example": [
+              "my-token-id"
+            ],
             "description": "List of API token names."
           }
         }
@@ -1688,6 +1845,47 @@
           }
         }
       },
+      "NetworkUserPermissions": {
+        "type": "object",
+        "description": "User permissions for a specific network",
+        "required": [
+          "id"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The user ID to set permissions for",
+            "example": "00000000-0000-0000-0000-000000000000"
+          },
+          "r": {
+            "type": "boolean",
+            "description": "Read permission - allows viewing network settings",
+            "default": false
+          },
+          "a": {
+            "type": "boolean",
+            "description": "Authorize permission - allows authorizing new members",
+            "default": false
+          },
+          "m": {
+            "type": "boolean",
+            "description": "Modify permission - allows changing network settings",
+            "default": false
+          },
+          "d": {
+            "type": "boolean",
+            "description": "Delete permission - allows removing members",
+            "default": false
+          }
+        },
+        "example": {
+          "id": "00000000-0000-0000-0000-000000000000",
+          "r": true,
+          "a": true,
+          "m": false,
+          "d": false
+        }
+      },
       "IPRange": {
         "type": "object",
         "properties": {
@@ -1714,7 +1912,9 @@
             "items": {
               "type": "string"
             },
-            "example": ["10.0.0.3"],
+            "example": [
+              "10.0.0.3"
+            ],
             "description": "IP address of unicast DNS service",
             "nullable": true
           }
@@ -1809,7 +2009,11 @@
       },
       "InviteStatus": {
         "type": "string",
-        "enum": ["pending", "accepted", "canceled"]
+        "enum": [
+          "pending",
+          "accepted",
+          "canceled"
+        ]
       },
       "Status": {
         "type": "object",

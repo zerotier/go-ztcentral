@@ -88,6 +88,9 @@ type InviteStatus string
 // Member defines model for Member.
 type Member struct {
 
+	// CPU architecture reported by the member
+	Arch *string `json:"arch"`
+
 	// ZeroTier version the member is running
 	ClientVersion *string       `json:"clientVersion"`
 	Clock         *int64        `json:"clock"`
@@ -116,8 +119,14 @@ type Member struct {
 	// ZeroTier ID of the member
 	NodeId *string `json:"nodeId"`
 
+	// Operating system reported by the member
+	Os *string `json:"os"`
+
 	// IP address the member last spoke to the controller via (milliseconds since epoch).  Note: This data is considered ephemeral and may be reset to 0 at any time without warning.
 	PhysicalAddress *string `json:"physicalAddress"`
+
+	// Geographic location of the member's physical address, if known
+	PhysicalLocation *string `json:"physicalLocation"`
 
 	// ZeroTier protocol version
 	ProtocolVersion *int `json:"protocolVersion"`
@@ -131,6 +140,12 @@ type MemberConfig struct {
 
 	// Allow the member to be a bridge on the network
 	ActiveBridge *bool `json:"activeBridge"`
+
+	// Email the member last authenticated with via SSO
+	AuthenticatedEmail *string `json:"authenticatedEmail"`
+
+	// Time the member's SSO authentication expires (milliseconds since epoch)
+	AuthenticationExpiryTime *int64 `json:"authenticationExpiryTime"`
 
 	// Is the member authorized on the network
 	Authorized   *bool  `json:"authorized"`
@@ -188,13 +203,18 @@ type Network struct {
 	Description           *string                 `json:"description"`
 	Id                    *string                 `json:"id"`
 
+	// Network is locked for migration; writes return 423 until the lock is released
+	MigrationLocked *bool `json:"migrationLocked"`
+
 	// Note: May be 0 on endpoints returning lists of Networks
-	OnlineMemberCount *int                    `json:"onlineMemberCount"`
-	OwnerId           *string                 `json:"ownerId"`
-	Permissions       *PermissionsMap         `json:"permissions,omitempty"`
-	RulesSource       *string                 `json:"rulesSource"`
-	TagsByName        *map[string]interface{} `json:"tagsByName"`
-	TotalMemberCount  *int                    `json:"totalMemberCount"`
+	OnlineMemberCount *int            `json:"onlineMemberCount"`
+	OwnerId           *string         `json:"ownerId"`
+	Permissions       *PermissionsMap `json:"permissions,omitempty"`
+
+	// The flow rules source code in ZeroTier rule language. Set this field to update network rules.
+	RulesSource      *string                 `json:"rulesSource"`
+	TagsByName       *map[string]interface{} `json:"tagsByName"`
+	TotalMemberCount *int                    `json:"totalMemberCount"`
 }
 
 // NetworkConfig defines model for NetworkConfig.
@@ -240,7 +260,7 @@ type NetworkConfig struct {
 type NetworkSSOConfig struct {
 
 	// List of email addresses or group memberships that may SSO auth onto the network
-	AllowList *[]string `json:"allowList"`
+	AllowedList *[]string `json:"allowedList"`
 
 	// Authorization URL endpoint
 	AuthorizationEndpoint *string `json:"authorizationEndpoint,omitempty"`
@@ -254,11 +274,30 @@ type NetworkSSOConfig struct {
 	// URL of the OIDC issuer
 	Issuer *string `json:"issuer,omitempty"`
 
-	// SSO mode.  One of: `default`, `email`, `group`
+	// SSO mode.  One of: `standard`, `email`, `group`
 	Mode *string `json:"mode,omitempty"`
 
 	// Provider type
 	Provider *string `json:"provider,omitempty"`
+}
+
+// User permissions for a specific network
+type NetworkUserPermissions struct {
+
+	// Authorize permission - allows authorizing new members
+	A *bool `json:"a,omitempty"`
+
+	// Delete permission - allows removing members
+	D *bool `json:"d,omitempty"`
+
+	// The user ID to set permissions for
+	Id string `json:"id"`
+
+	// Modify permission - allows changing network settings
+	M *bool `json:"m,omitempty"`
+
+	// Read permission - allows viewing network settings
+	R *bool `json:"r,omitempty"`
 }
 
 // OrgSsoConfig defines model for OrgSsoConfig.
@@ -450,6 +489,9 @@ type UpdateNetworkJSONBody Network
 // UpdateNetworkMemberJSONBody defines parameters for UpdateNetworkMember.
 type UpdateNetworkMemberJSONBody Member
 
+// SetNetworkUserPermissionsJSONBody defines parameters for SetNetworkUserPermissions.
+type SetNetworkUserPermissionsJSONBody NetworkUserPermissions
+
 // InviteUserByEmailJSONBody defines parameters for InviteUserByEmail.
 type InviteUserByEmailJSONBody OrganizationInvitation
 
@@ -467,6 +509,9 @@ type UpdateNetworkJSONRequestBody UpdateNetworkJSONBody
 
 // UpdateNetworkMemberJSONRequestBody defines body for UpdateNetworkMember for application/json ContentType.
 type UpdateNetworkMemberJSONRequestBody UpdateNetworkMemberJSONBody
+
+// SetNetworkUserPermissionsJSONRequestBody defines body for SetNetworkUserPermissions for application/json ContentType.
+type SetNetworkUserPermissionsJSONRequestBody SetNetworkUserPermissionsJSONBody
 
 // InviteUserByEmailJSONRequestBody defines body for InviteUserByEmail for application/json ContentType.
 type InviteUserByEmailJSONRequestBody InviteUserByEmailJSONBody
@@ -635,6 +680,11 @@ type ClientInterface interface {
 	UpdateNetworkMemberWithBody(ctx context.Context, networkID string, memberID string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	UpdateNetworkMember(ctx context.Context, networkID string, memberID string, body UpdateNetworkMemberJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// SetNetworkUserPermissions request  with any body
+	SetNetworkUserPermissionsWithBody(ctx context.Context, networkID string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	SetNetworkUserPermissions(ctx context.Context, networkID string, body SetNetworkUserPermissionsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetOrganization request
 	GetOrganization(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -822,6 +872,30 @@ func (c *Client) UpdateNetworkMemberWithBody(ctx context.Context, networkID stri
 
 func (c *Client) UpdateNetworkMember(ctx context.Context, networkID string, memberID string, body UpdateNetworkMemberJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewUpdateNetworkMemberRequest(c.Server, networkID, memberID, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) SetNetworkUserPermissionsWithBody(ctx context.Context, networkID string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSetNetworkUserPermissionsRequestWithBody(c.Server, networkID, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) SetNetworkUserPermissions(ctx context.Context, networkID string, body SetNetworkUserPermissionsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSetNetworkUserPermissionsRequest(c.Server, networkID, body)
 	if err != nil {
 		return nil, err
 	}
@@ -1381,6 +1455,53 @@ func NewUpdateNetworkMemberRequestWithBody(server string, networkID string, memb
 	}
 
 	operationPath := fmt.Sprintf("/network/%s/member/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = operationPath[1:]
+	}
+	operationURL := url.URL{
+		Path: operationPath,
+	}
+
+	queryURL := serverURL.ResolveReference(&operationURL)
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewSetNetworkUserPermissionsRequest calls the generic SetNetworkUserPermissions builder with application/json body
+func NewSetNetworkUserPermissionsRequest(server string, networkID string, body SetNetworkUserPermissionsJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewSetNetworkUserPermissionsRequestWithBody(server, networkID, "application/json", bodyReader)
+}
+
+// NewSetNetworkUserPermissionsRequestWithBody generates requests for SetNetworkUserPermissions with any type of body
+func NewSetNetworkUserPermissionsRequestWithBody(server string, networkID string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "networkID", runtime.ParamLocationPath, networkID)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/network/%s/users", pathParam0)
 	if operationPath[0] == '/' {
 		operationPath = operationPath[1:]
 	}
@@ -1997,6 +2118,11 @@ type ClientWithResponsesInterface interface {
 
 	UpdateNetworkMemberWithResponse(ctx context.Context, networkID string, memberID string, body UpdateNetworkMemberJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateNetworkMemberResponse, error)
 
+	// SetNetworkUserPermissions request  with any body
+	SetNetworkUserPermissionsWithBodyWithResponse(ctx context.Context, networkID string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SetNetworkUserPermissionsResponse, error)
+
+	SetNetworkUserPermissionsWithResponse(ctx context.Context, networkID string, body SetNetworkUserPermissionsJSONRequestBody, reqEditors ...RequestEditorFn) (*SetNetworkUserPermissionsResponse, error)
+
 	// GetOrganization request
 	GetOrganizationWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetOrganizationResponse, error)
 
@@ -2239,6 +2365,28 @@ func (r UpdateNetworkMemberResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r UpdateNetworkMemberResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type SetNetworkUserPermissionsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *NetworkUserPermissions
+}
+
+// Status returns HTTPResponse.Status
+func (r SetNetworkUserPermissionsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r SetNetworkUserPermissionsResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -2677,6 +2825,23 @@ func (c *ClientWithResponses) UpdateNetworkMemberWithResponse(ctx context.Contex
 	return ParseUpdateNetworkMemberResponse(rsp)
 }
 
+// SetNetworkUserPermissionsWithBodyWithResponse request with arbitrary body returning *SetNetworkUserPermissionsResponse
+func (c *ClientWithResponses) SetNetworkUserPermissionsWithBodyWithResponse(ctx context.Context, networkID string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SetNetworkUserPermissionsResponse, error) {
+	rsp, err := c.SetNetworkUserPermissionsWithBody(ctx, networkID, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseSetNetworkUserPermissionsResponse(rsp)
+}
+
+func (c *ClientWithResponses) SetNetworkUserPermissionsWithResponse(ctx context.Context, networkID string, body SetNetworkUserPermissionsJSONRequestBody, reqEditors ...RequestEditorFn) (*SetNetworkUserPermissionsResponse, error) {
+	rsp, err := c.SetNetworkUserPermissions(ctx, networkID, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseSetNetworkUserPermissionsResponse(rsp)
+}
+
 // GetOrganizationWithResponse request returning *GetOrganizationResponse
 func (c *ClientWithResponses) GetOrganizationWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetOrganizationResponse, error) {
 	rsp, err := c.GetOrganization(ctx, reqEditors...)
@@ -3046,6 +3211,32 @@ func ParseUpdateNetworkMemberResponse(rsp *http.Response) (*UpdateNetworkMemberR
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest Member
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseSetNetworkUserPermissionsResponse parses an HTTP response from a SetNetworkUserPermissionsWithResponse call
+func ParseSetNetworkUserPermissionsResponse(rsp *http.Response) (*SetNetworkUserPermissionsResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &SetNetworkUserPermissionsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest NetworkUserPermissions
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
