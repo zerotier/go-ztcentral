@@ -30,7 +30,6 @@ package ztcentral
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/zerotier/go-ztcentral/pkg/spec"
 )
@@ -110,11 +109,5 @@ func (c *Client) DeleteNetwork(ctx context.Context, networkID string) error {
 		return err
 	}
 
-	resp.Body.Close()
-
-	if resp.StatusCode != 200 {
-		return fmt.Errorf("Status was %v: %w", resp.StatusCode, ErrStatus)
-	}
-
-	return nil
+	return checkStatus(resp)
 }

@@ -34,8 +34,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"io/ioutil"
 	"net/http"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/zerotier/go-ztcentral/pkg/spec"
@@ -55,7 +58,9 @@ type Client struct {
 
 	apiKey    string
 	userAgent string
-	limits    RateLimitHeaders
+
+	limitsMu sync.Mutex
+	limits   RateLimitHeaders
 }
 
 type RateLimitHeaders struct {
@@ -94,6 +99,76 @@ func newRateLimitHeaders(h http.Header) RateLimitHeaders {
 
 // ErrStatus is returned when the response code is not 200.
 var ErrStatus = errors.New("status code was not 200")
+
+// maxErrorBody caps how much of an error response is kept on an APIError.
+const maxErrorBody = 64 * 1024
+
+// APIError is returned when Central responds with a status other than 200. It
+// wraps ErrStatus, so errors.Is(err, ErrStatus) still matches.
+type APIError struct {
+	StatusCode int
+	// Type and Message are decoded from Central's {"type", "message"} error
+	// body, when present.
+	Type    string
+	Message string
+	// Body is the raw response body, truncated to 64KiB.
+	Body []byte
+}
+
+func newAPIError(resp *http.Response) *APIError {
+	body, _ := ioutil.ReadAll(io.LimitReader(resp.Body, maxErrorBody))
+
+	e := &APIError{StatusCode: resp.StatusCode, Body: body}
+
+	var decoded struct {
+		Type    string `json:"type"`
+		Message string `json:"message"`
+	}
+
+	if json.Unmarshal(body, &decoded) == nil {
+		e.Type = decoded.Type
+		e.Message = decoded.Message
+	}
+
+	return e
+}
+
+func (e *APIError) Error() string {
+	switch {
+	case e.Message != "" && e.Type != "":
+		return fmt.Sprintf("Status code %d: %s (%s)", e.StatusCode, e.Message, e.Type)
+	case e.Message != "":
+		return fmt.Sprintf("Status code %d: %s", e.StatusCode, e.Message)
+	case e.Type != "":
+		return fmt.Sprintf("Status code %d: %s", e.StatusCode, e.Type)
+	default:
+		return fmt.Sprintf("Status code %d: %s", e.StatusCode, ErrStatus)
+	}
+}
+
+func (e *APIError) Unwrap() error {
+	return ErrStatus
+}
+
+// IsNotFound reports whether err is an APIError for a 404 response.
+func IsNotFound(err error) bool {
+	var apiErr *APIError
+	return errors.As(err, &apiErr) && apiErr.StatusCode == http.StatusNotFound
+}
+
+// checkStatus consumes and closes the response body. It returns an *APIError
+// if the status is not 200.
+func checkStatus(resp *http.Response) error {
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return newAPIError(resp)
+	}
+
+	_, _ = io.Copy(ioutil.Discard, resp.Body)
+
+	return nil
+}
 
 // NewClient creates a client.
 // key is an API key for your ZeroTier Central that you can generate after login.
@@ -134,25 +209,32 @@ func (c *Client) RoundTrip(req *http.Request) (*http.Response, error) {
 	req.Header.Set("Accept", "application/json; charset=utf-8")
 	req.Header.Set("Authorization", fmt.Sprintf("bearer %s", c.apiKey))
 
-	if c.limits.Limit != 0 && c.limits.Remaining < c.limits.Limit {
-		diff := time.Now().Add(time.Duration(c.limits.Limit-c.limits.Remaining) * 10 * time.Millisecond).Sub(time.Now())
-		time.Sleep(diff)
+	c.limitsMu.Lock()
+	limits := c.limits
+	c.limitsMu.Unlock()
+
+	if limits.Limit != 0 && limits.Remaining < limits.Limit {
+		time.Sleep(time.Duration(limits.Limit-limits.Remaining) * 10 * time.Millisecond)
 	}
 
 	resp, err := http.DefaultTransport.RoundTrip(req)
+	if err != nil {
+		return nil, err
+	}
 
-	a := newRateLimitHeaders(resp.Header)
+	c.limitsMu.Lock()
+	c.limits = newRateLimitHeaders(resp.Header)
+	c.limitsMu.Unlock()
 
-	c.limits = a
-
-	return resp, err
+	return resp, nil
 }
 
 func (c *Client) decode(resp *http.Response, i interface{}) error {
-	if resp.StatusCode != 200 {
-		return fmt.Errorf("Status code %v: %w", resp.StatusCode, ErrStatus)
-	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return newAPIError(resp)
+	}
 
 	return json.NewDecoder(resp.Body).Decode(i)
 }
